@@ -1,0 +1,115 @@
+rut_common_sources = \
+    rut.h \
+    rut-types.h \
+    rut-keysyms.h \
+    color-table.h \
+    rut-exception.h \
+    rut-exception.c \
+    rut-os.h \
+    rut-os.c \
+    rut-color.h \
+    rut-color.c \
+    rut-type.h \
+    rut-type.c \
+    rut-object.h \
+    rut-object.c \
+    rut-property.h \
+    rut-property.c \
+    rut-introspectable.h \
+    rut-introspectable.c \
+    rut-interfaces.h \
+    rut-interfaces.c \
+    rut-graphable.h \
+    rut-graphable.c \
+    rut-matrix-stack.h \
+    rut-matrix-stack.c \
+    rut-transform-private.h \
+    rut-shell.h \
+    rut-shell.c \
+    rut-headless-shell.h \
+    rut-headless-shell.c \
+    rut-settings.h \
+    rut-settings.c \
+    rut-texture-cache.h \
+    rut-texture-cache.c \
+    rut-bitmask.h \
+    rut-bitmask.c \
+    rut-flags.h \
+    rut-memory-stack.h \
+    rut-memory-stack.c \
+    rut-magazine.h \
+    rut-magazine.c \
+    rut-queue.h \
+    rut-queue.c \
+    rut-util.h \
+    rut-util.c \
+    rut-geometry.h \
+    rut-geometry.c \
+    rut-paintable.h \
+    rut-paintable.c \
+    rut-closure.h \
+    rut-closure.c \
+    rut-gaussian-blurrer.h \
+    rut-gaussian-blurrer.c \
+    rut-mesh.h \
+    rut-mesh.c \
+    rply.c \
+    rply.h \
+    rut-mesh-ply.h \
+    rut-mesh-ply.c \
+    rut-graph.h \
+    rut-graph.c \
+    rut-refcount-debug.h \
+    rut-refcount-debug.c \
+    rut-mimable.h \
+    rut-mimable.c \
+    rut-input-region.h \
+    rut-input-region.c \
+    rut-camera.h \
+    rut-camera.c \
+    rut-poll.h \
+    rut-poll.c \
+    rut-inputable.h \
+    rut-meshable.h \
+    rut-gradient.h \
+    rut-gradient.c
+
+rut_sdl_sources = \
+    rut-sdl-shell.h \
+    rut-sdl-shell.c \
+    rut-sdl-keysyms.c \
+    rut-sdl-keysyms.h
+
+rut_editor_sources = \
+    rut-pickable.h \
+    rut-volume.h \
+    rut-volume.c \
+    rut-volume-private.h \
+    rut-planes.h \
+    rut-planes.c \
+    rut-transform.h \
+    rut-transform.c \
+    rut-rectangle.h \
+    rut-rectangle.c \
+    rut-arcball.h \
+    rut-arcball.c \
+    rut-image.h \
+    rut-image.c \
+    rut-adb.h \
+    rut-adb.c
+
+#TODO: remove
+rut_unused_sources = \
+    rut-display-list.h \
+    rut-display-list.c
+
+# Headers that will need to be available for compiling code at runtime
+# and so need to be installed...
+runtime_headers = \
+    rut-property-bare.h \
+    rut-property-types.h
+
+rut_emscripten_sources = \
+    $(rut_common_sources) \
+    rut-emscripten-shell.h \
+    rut-emscripten-shell.c

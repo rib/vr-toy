@@ -1,0 +1,10 @@
+[subdir "upstream"]
+	url = git@github.com:rig-project/rig.git
+	branch = master
+[subdir "integration"]
+	url = git@github.com:rig-project/rig.git
+	branch = vr-toy
+	ref = 117d1e690f35786b015da1c26f45ce21abdd76f8
+[subdir]
+	commit-uuid = c25bc620-ce1b-4494-a69b-f7eddd2c916e
+	version = 1
