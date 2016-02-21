@@ -20,6 +20,12 @@
 
   'target_defaults': {
     'default_configuration': 'Debug',
+    'cflags': [
+        '-Wall',
+        '-Wno-missing-field-initializers',
+        '-Wno-missing-braces',
+        '-Wno-sign-compare'
+    ],
     'configurations': {
       'Debug': {
         'defines': [ 'DEBUG', '_DEBUG' ],
@@ -139,7 +145,6 @@
         ]
       }],
       ['OS in "freebsd linux openbsd solaris android"', {
-        'cflags': [ '-Wall' ],
         'cflags_cc': [ '-fno-rtti', '-fno-exceptions' ],
         'target_conditions': [
           ['_type=="static_library"', {
@@ -187,7 +192,6 @@
             '-fstrict-aliasing',
           ],
           'WARNING_CFLAGS': [
-            '-Wall',
             '-Wendif-labels',
             '-W',
             '-Wno-unused-parameter',
