@@ -101,8 +101,8 @@ vr_toy_load(RModule *module)
     r_set_color_by_name(module, material, "specular",
                         r_color_str(module, "#ffffff"));
 
-    //video_source = r_source_new(module, "file://test.webm");
-    video_source = r_source_new(module, "file://cat.gif");
+    video_source = r_source_new(module, "file://test.webm");
+    //video_source = r_source_new(module, "file://cat.gif");
     //video_source = r_source_new(module, NULL);
     //r_set_boolean_by_name(module, video_source, "running", true);
 
