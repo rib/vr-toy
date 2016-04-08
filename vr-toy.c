@@ -24,11 +24,14 @@
 
 #include <stdlib.h>
 #include <getopt.h>
+#include <math.h>
+#include <assert.h>
 
 #include <clib.h>
 #include <rut.h>
 
 #include <rig-c.h>
+#include <rig-c-mesh.h>
 
 static RObject *cam;
 static RObject *test;
@@ -37,6 +40,127 @@ static RObject *text;
 static RObject *text_comp;
 
 static RObject *rects[100];
+
+static RObject *vertex_buf;
+static RObject *indices_buf;
+static RObject *sphere_mesh;
+
+struct vert {
+    float pos[3];
+    float s, t;
+};
+
+static void
+create_mesh(RModule *module)
+{
+    struct vert vertices[10000];
+    uint16_t indices[99*99*6];
+    float normal[3] = { 0, 0, 1 };
+    float tangent[3] = { 1, 0, 0 };
+
+    sphere_mesh = r_mesh_new(module);
+
+    vertex_buf = r_buffer_new(module, sizeof(vertices));
+    indices_buf = r_buffer_new(module, sizeof(indices));
+
+    RObject *attributes[] = {
+        r_attribute_new(module,
+                        vertex_buf,
+                        "cg_position_in",
+                        sizeof(struct vert),
+                        offsetof(struct vert, pos),
+                        3,
+                        R_ATTRIBUTE_TYPE_FLOAT),
+        r_attribute_new(module,
+                        vertex_buf,
+                        "cg_tex_coord0_in",
+                        sizeof(struct vert),
+                        offsetof(struct vert, s),
+                        2,
+                        R_ATTRIBUTE_TYPE_FLOAT),
+#if 0
+        r_attribute_new(module,
+                        vertex_buf,
+                        "cg_normal_in",
+                        sizeof(struct vert),
+                        offsetof(struct vert, pos),
+                        3,
+                        R_ATTRIBUTE_TYPE_FLOAT),
+#endif
+        r_attribute_new_const(module,
+                              "cg_normal_in",
+                              3, /* n components */
+                              1, /* n columns */
+                              false, /* no transpose */
+                              normal),
+        r_attribute_new_const(module,
+                              "tangent_in",
+                              3, /* n components */
+                              1, /* n columns */
+                              false, /* no transpose */
+                              tangent),
+    };
+
+    /* Tesselate a sphere for a rectilinear unproject of the video
+     * source.
+     *
+     * HACK...
+     */
+    for (int y = 0; y < 100; y++) {
+        float v_angle = (M_PI / 100.0) * y;
+
+        for (int x = 0; x < 100; x++) {
+            float h_angle = (M_PI * 2.0 / 100.0) * x;
+            int i = 100 * y + x;
+
+            vertices[i].pos[0] = sin(h_angle) * fabs(sin(v_angle));
+            vertices[i].pos[1] = 1.0 - y * 0.02;
+            vertices[i].pos[2] = cos(h_angle) * fabs(sin(v_angle));
+
+            vertices[i].s = x * 0.01;
+            vertices[i].t = y * 0.01;
+        }
+    }
+#if 0
+    for (int y = 0; y < 100; y++) {
+        for (int x = 0; x < 100; x++) {
+            int i = 100 * y + x;
+            vertices[i].pos[0] = -5.0 + x * 0.1;
+            vertices[i].pos[1] = -5.0 + y * 0.1;
+            vertices[i].pos[2] = 0;
+        }
+    }
+#endif
+
+    int i = 0;
+    for (int y = 0; y < 99; y++) {
+        for (int x = 0; x < 99; x++) {
+            int i0 = 100 * y + x;
+            int i1 = 100 * (y + 1) + x;
+            int i2 = 100 * (y + 1) + x + 1;
+            int i3 = 100 * y + x + 1;
+
+            indices[i++] = i0;
+            indices[i++] = i1;
+            indices[i++] = i2;
+            indices[i++] = i0;
+            indices[i++] = i2;
+            indices[i++] = i3;
+        }
+    }
+    assert(i == 99 * 99 * 6);
+
+    r_set_enum_by_name(module, sphere_mesh, "vertices_mode", R_VERTICES_MODE_TRIANGLES);
+    r_set_integer_by_name(module, sphere_mesh, "n_vertices", 10000);
+    r_set_enum_by_name(module, sphere_mesh, "indices_type", R_INDICES_TYPE_UINT16);
+    r_set_object_by_name(module, sphere_mesh, "indices", indices_buf);
+    r_set_integer_by_name(module, sphere_mesh, "n_indices", 99*99*6);
+
+    r_buffer_set_data(module, vertex_buf, 0, vertices, sizeof(vertices));
+    r_buffer_set_data(module, indices_buf, 0, indices, sizeof(indices));
+
+    r_mesh_set_attributes(module, sphere_mesh, attributes, 3);
+}
 
 void
 vr_toy_load(RModule *module)
@@ -51,6 +175,8 @@ vr_toy_load(RModule *module)
     RObject *controller;
     int x, y;
     RObject *video_source;
+
+    create_mesh(module);
 
     RObject *e = r_entity_new(module, NULL);
     r_set_text_by_name(module, e, "label", "light");
@@ -109,7 +235,8 @@ vr_toy_load(RModule *module)
     r_set_object_by_name(module, material, "color_source", video_source);
 
     test = r_entity_new(module, NULL);
-    r_add_component(module, test, shape);
+    //r_add_component(module, test, shape);
+    r_add_component(module, test, sphere_mesh);
     //r_add_component(module, test, nine_slice);
     r_add_component(module, test, material);
 
