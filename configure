@@ -378,6 +378,10 @@ print("Running gyp:")
 print("$ gyp " + " ".join(gyp_args))
 run_gyp(gyp_args)
 
+#print("Running node-gyp:")
+#print("$ node-gyp configure")
+#subprocess.check_call(["node-gyp", "configure"])
+
 if "ninja" in gyp_args:
     print("\n\nReady to build:")
     print("$ make")
