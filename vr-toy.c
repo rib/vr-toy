@@ -276,8 +276,10 @@ vr_toy_load(RModule *module)
 }
 
 void
-vr_toy_update(RModule *module, double delta_seconds)
+vr_toy_update(RModule *module, RUpdateState *update)
 {
+    double delta_seconds = update->progress;
+
     //static float n = 0;
 
     //n -= 0.5;
