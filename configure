@@ -201,7 +201,10 @@ for name, opt in options.items():
 opt_args = parser.parse_args()
 opt_args_dict = vars(opt_args)
 
-gyp_args = []
+if opt_args.host != None and "emscripten" in opt_args.host:
+    use_libuv = False
+else:
+    use_libuv = True
 
 options['_']["defines"].append("ICU_DATA_DIR=\"" + pkg_config_variable("icu-uc", "prefix") + "/share\"")
 options['_']["defines"].append("RIG_BIN_DIR=\"" + opt_args.prefix + "/bin\"")
@@ -241,7 +244,28 @@ gyp_config.write("{\n")
 gyp_config.write("  'variables': {\n")
 
 for name, opt in options.items():
-    gyp_config.write("    'enable_" + name + "%': '0',\n")
+    if opt["enabled"]:
+        gyp_config.write("    'enable_" + name + "%': '1',\n")
+    else:
+        gyp_config.write("    'enable_" + name + "%': '0',\n")
+
+if opt_args.host != None and "emscripten" in opt_args.host:
+    gyp_config.write("    'OS%': 'emscripten',\n")
+
+if sys.platform == 'win32':
+    gyp_config.write("    'os_posix%': '0',\n")
+else:
+    gyp_config.write("    'os_posix%': '1',\n")
+
+if use_libuv:
+    gyp_config.write("    'enable_uv%': '1',\n")
+else:
+    gyp_config.write("    'enable_uv%': '0',\n")
+
+gyp_config.write("    'host_arch%': '" + host_arch() + "',\n")
+gyp_config.write("    'target_arch%': '" + host_arch() + "',\n")
+
+gyp_config.write("    'is_nodejs_build%': '1',\n")
 
 gyp_config.write("  },\n")
 
@@ -288,12 +312,15 @@ for name, opt in enabled.items():
         for define in defines:
             subst["CG_DEFINES"] = subst["CG_DEFINES"] + "#define " + define + "\n"
 
+gyp_args = []
+
 gyp_args.append(os.path.join(src_dir, 'vr-toy.gyp'))
 
+gyp_args.extend('-f ninja'.split())
+#gyp_args.extend('-f make'.split())
 
-gyp_args.append('-Dlibrary=shared_library')
-gyp_args.append('--debug=all')
-gyp_args.append('--check')
+#gyp_args.append('--debug=all')
+#gyp_args.append('--check')
 
 gyp_args.extend(['-I', "config.gypi"])
 gyp_args.extend(['-I', "common.gypi"])
@@ -304,40 +331,20 @@ if os.path.exists(options_fn):
 
 gyp_args.append('--depth=' + src_dir)
 
+gyp_args.append('-Dlibrary=shared_library')
+
 if opt_args.enable_shared:
     gyp_args.append('-Drig_library=shared_library')
-
-# There's a bug with windows which doesn't allow this feature.
-if sys.platform != 'win32':
-    if '-f' not in gyp_args:
-        gyp_args.extend('-f ninja'.split())
-    if 'eclipse' not in gyp_args and 'ninja' not in gyp_args:
-        gyp_args.extend(['-Goutput_dir=' + output_dir])
-        gyp_args.extend(['--generator-output', output_dir])
-
-if not any(a.startswith('-Dhost_arch=') for a in gyp_args):
-    gyp_args.append('-Dhost_arch=%s' % host_arch())
-
-if not any(a.startswith('-Dtarget_arch=') for a in gyp_args):
-    gyp_args.append('-Dtarget_arch=%s' % host_arch())
-
-if os.name == "posix":
-    gyp_args.append('-Dos_posix=1')
 
 if sys.platform == 'win32':
     # Override the Gyp default and require a half-modern C compiler...
     if not os.environ.get('GYP_MSVS_VERSION'):
         os.environ['GYP_MSVS_VERSION'] = '2015'
 
-if opt_args.host != None and "emscripten" in opt_args.host:
-    gyp_args.append('-DOS=emscripten')
-else:
-    gyp_args.append('-Denable_uv')
+if use_libuv:
     subst["CG_DEFINES"] = subst["CG_DEFINES"] + "#define CG_HAS_UV_SUPPORT\n"
 
-for name in enabled:
-    gyp_args.append("-Denable_" + name)
-
+gyp_args.extend(['-Dis_nodejs_build=0'])
 
 gyp_config.close()
 
@@ -373,4 +380,4 @@ run_gyp(gyp_args)
 
 if "ninja" in gyp_args:
     print("\n\nReady to build:")
-    print("$ ninja -C ./out/Debug")
+    print("$ make")
