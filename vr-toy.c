@@ -240,8 +240,10 @@ vr_toy_load(RModule *module)
     //r_add_component(module, test, nine_slice);
     r_add_component(module, test, material);
 
-    RObject *button = r_button_input_new(module);
-    r_add_component(module, test, button);
+    /* TODO: support associating a simpler pick mesh with a component
+     * otherwise picking can be very expensive */
+    //RObject *button = r_button_input_new(module);
+    //r_add_component(module, test, button);
 
     r_entity_rotate_z_axis(module, test, 45.f);
 
