@@ -304,7 +304,12 @@ vr_toy_input(RModule *module, RInputEvent *event)
 int
 main(int argc, char **argv)
 {
-    r_engine_t *engine = r_engine_new();
+    r_engine_t *engine;
+
+    /* HACK... */
+    setenv("RIG_USE_HMD", "dummy", true);
+
+    engine = r_engine_new(&(REngineConfig) { .require_vr_hmd = true });
 
     r_engine_add_self_as_native_component(engine,
                                           R_ABI_LATEST,
