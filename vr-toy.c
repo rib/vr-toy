@@ -166,7 +166,6 @@ void
 vr_toy_load(RModule *module)
 {
     RObject *nine_slice  = r_nine_slice_new(module, 0, 0, 0, 0, 8.5, 8.5);
-    RObject *shape = r_shape_new(module, 8.5, 8.5);
     RObject *material = r_material_new(module);
     RColor light_ambient = { .2, .2, .2, 1 };
     RColor light_diffuse = { .6, .6, .6, 1 };
@@ -200,12 +199,12 @@ vr_toy_load(RModule *module)
     r_add_component(module, e, light_frustum);
 
     e = r_entity_new(module, NULL);
-    r_set_vec3_by_name(module, e, "position", (float [3]){0, 0, 100});
+    r_set_vec3_by_name(module, e, "position", (float [3]){0, 0, 0});
     r_set_text_by_name(module, e, "label", "play-camera");
 
     RObject *play_cam = r_camera_new(module);
     r_set_enum_by_name(module, play_cam, "mode", R_PROJECTION_PERSPECTIVE);
-    r_set_float_by_name(module, play_cam, "fov", 10);
+    r_set_float_by_name(module, play_cam, "fov", 90);
     r_set_float_by_name(module, play_cam, "near", 10);
     r_set_float_by_name(module, play_cam, "far", 10000);
     r_set_boolean_by_name(module, play_cam, "clear", false);
@@ -245,7 +244,7 @@ vr_toy_load(RModule *module)
     //RObject *button = r_button_input_new(module);
     //r_add_component(module, test, button);
 
-    r_entity_rotate_z_axis(module, test, 45.f);
+    r_entity_rotate_z_axis(module, test, 180.f);
 
     r_set_vec3_by_name(module, test, "position", (float [3]){0, 0, 0});
 
@@ -254,7 +253,7 @@ vr_toy_load(RModule *module)
     for (y = 0; y < 1; y++)
         for (x = 0; x < 1; x++) {
             RObject *rect = r_entity_clone(module, test);
-            r_set_float_by_name(module, rect, "scale", 1);
+            r_set_float_by_name(module, rect, "scale", 100);
             //r_set_vec3_by_name(module, rect, "position", (float [3]){-5 + x, -5 + y, 0});
 
             rects[10 * y + x] = rect;
@@ -288,7 +287,7 @@ vr_toy_update(RModule *module, RUpdateState *update)
 
     //for (int i = 0; i < 100; i++)
     //    r_entity_rotate_z_axis(module, rects[i], delta_seconds * 90.f);
-    r_entity_rotate_z_axis(module, rects[0], delta_seconds * 90.f);
+    //r_entity_rotate_z_axis(module, rects[0], delta_seconds * 90.f);
 
     r_request_animation_frame(module);
 
