@@ -106,7 +106,7 @@ options = {
         "ffmpeg": {
             "help": "ffmpeg support",
             "enabled": True,
-            "pkg-config": "libavcodec libavformat libavutil libswscale",
+            "pkg-config": "libavcodec libavformat libavutil libswscale libswresample",
             "defines": [ "USE_FFMPEG" ]
         },
 #        "uv": {
