@@ -109,6 +109,12 @@ options = {
             "pkg-config": "libavcodec libavformat libavutil libswscale libswresample",
             "defines": [ "USE_FFMPEG" ]
         },
+        "alsa": {
+            "help": "Alsa audio support",
+            "enabled": True,
+            "pkg-config": "alsa",
+            "defines": [ "USE_ALSA" ]
+        },
 #        "uv": {
 #            "help": "libuv support",
 #            "enabled": True,
