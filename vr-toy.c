@@ -165,7 +165,6 @@ create_mesh(RModule *module)
 void
 vr_toy_load(RModule *module)
 {
-    RObject *nine_slice  = r_nine_slice_new(module, 0, 0, 0, 0, 8.5, 8.5);
     RObject *material = r_material_new(module);
     RColor light_ambient = { .2, .2, .2, 1 };
     RColor light_diffuse = { .6, .6, .6, 1 };
@@ -234,9 +233,7 @@ vr_toy_load(RModule *module)
     r_set_object_by_name(module, material, "color_source", video_source);
 
     test = r_entity_new(module, NULL);
-    //r_add_component(module, test, shape);
     r_add_component(module, test, sphere_mesh);
-    //r_add_component(module, test, nine_slice);
     r_add_component(module, test, material);
 
     /* TODO: support associating a simpler pick mesh with a component
