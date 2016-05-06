@@ -1,0 +1,10 @@
+[subdir "upstream"]
+	url = https://github.com/madler/zlib
+	branch = master
+[subdir "integration"]
+	ref = edbb470cbf5ad6e91025ccca551441616541fd5c
+	url = git@github.com:rig-project/zlib.git
+	branch = rig
+[subdir]
+	version = 1
+	commit-uuid = 78c49236-7c7d-49dc-8aab-aa35d0e2e26b
