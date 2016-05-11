@@ -4,7 +4,7 @@
 [subdir "integration"]
 	url = git@github.com:rig-project/rig.git
 	branch = vr-toy
-	ref = e41648861ff1d06c984761c5a389846c62436df6
+	ref = bc5376c27ceaa2a9902448ae0ff029cc1479211e
 [subdir]
-	commit-uuid = 3cf1a290-1548-4c46-946d-336f8743733a
+	commit-uuid = ec7e25b9-7d07-4e5e-83c6-776e0af045cc
 	version = 1

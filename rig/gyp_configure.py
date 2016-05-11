@@ -84,7 +84,7 @@ enabled = {}
 options = {
         "_": {
             "enabled": True,
-            "pkg-config": "libpng protobuf mozjs-24 gdk-pixbuf-2.0",
+            "pkg-config": "libpng mozjs-24 gdk-pixbuf-2.0",
         },
         "debug": {
             "help": "debug support",
@@ -101,6 +101,18 @@ options = {
             "help": "OculusRift support",
             "enabled": True,
             "defines": [ "ENABLE_OCULUS_RIFT" ],
+        },
+        "ffmpeg": {
+            "help": "ffmpeg support",
+            "enabled": True,
+            "pkg-config": "libavcodec libavformat libavutil libswscale libswresample",
+            "defines": [ "USE_FFMPEG" ]
+        },
+        "alsa": {
+            "help": "Alsa audio support",
+            "enabled": True,
+            "pkg-config": "alsa",
+            "defines": [ "USE_ALSA" ]
         },
 #        "uv": {
 #            "help": "libuv support",
@@ -283,6 +295,7 @@ for name, opt in enabled.items():
 gyp_args.append(os.path.join(rig_root, 'rig.gyp'))
 
 
+gyp_args.append('-Dis_nodejs_build=0')
 gyp_args.append('-Dlibrary=shared_library')
 gyp_args.append('--debug=all')
 gyp_args.append('--check')

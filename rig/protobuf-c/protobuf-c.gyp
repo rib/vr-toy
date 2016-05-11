@@ -3,7 +3,7 @@
 
     'conditions': [
       [ 'OS!="win"', { #i.e. POSIX
-        'ddefines': [
+        'defines': [
           '_ALL_SOURCE=1',
           '_GNU_SOURCE=1',
           'STDC_HEADERS=1',
@@ -50,7 +50,9 @@
       'type': 'executable',
       'toolsets': [ 'host' ],
       'dependencies': [
-        'protobuf-c'
+         '../protobuf/protobuf.gyp:protobuf_full_do_not_use#host',
+         '../protobuf/protobuf.gyp:protoc#host',
+         'protobuf-c'
       ],
       'include_dirs': [
         '.',
@@ -89,8 +91,6 @@
 	'protoc-c/main.cc',
       ],
       'libraries': [
-        '-lprotobuf',
-        '-lprotoc',
         '-lstdc++',
         '-lz'
       ],
