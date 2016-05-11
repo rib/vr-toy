@@ -28,7 +28,7 @@
 /* Note: we have to build this file as C++ under MSVC */
 #include <atomic>
 static CRITICAL_SECTION tls_lock;
-static std::atomic<c_tls_t *> tls_head = nullptr;
+static std::atomic<c_tls_t *> tls_head;
 
 void
 c_tls_init(c_tls_t *tls, void (*destroy)(void *data))
