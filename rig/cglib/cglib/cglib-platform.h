@@ -31,8 +31,15 @@
  *
  * NB: this header is public
  */
-
 #if defined(C_PLATFORM_UNIX) && !defined(C_PLATFORM_WEB)
 #define CG_HAS_POLL_SUPPORT
+#endif
+
+#ifdef _WIN32
+#define LEAN_AND_MEAN
+#include <windows.h>
+#undef near
+#undef far
+#undef LEAN_AND_MEAN
 #endif
 

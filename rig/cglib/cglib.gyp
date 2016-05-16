@@ -15,12 +15,13 @@
       'include_dirs': [
         '.',
         'cglib',
+	'cglib/khronos',
         'cglib/sfmt',
 	'cglib/winsys',
 	'cglib/driver/nop',
 	'cglib/driver/gl',
 	'cglib/driver/gl/gl',
-	'cglib/driver/gl/gles'
+	'cglib/driver/gl/gles',
       ],
       'all_dependent_settings': {
         'include_dirs': [ '.' ],
@@ -182,7 +183,6 @@
         'cglib/cg-sub-texture.c',
         'cglib/cg-sampler-cache.c',
         'cglib/cg-texture-2d-gl.h',
-        'cglib/cg-gles2-types.h',
         'cglib/cg-magazine.c',
         'cglib/cg-rectangle-map.h',
         'cglib/cg-color-private.h',
@@ -239,16 +239,11 @@
         'cglib/driver/nop/cg-clip-stack-nop-private.h',
         'cglib/driver/nop/cg-framebuffer-nop.c',
 
-        'cglib/cg-gles2.h',
         'cglib/cg-gl-header.h',
-
-        'cglib/cg-gles2-context.c',
 
         'cglib/gl-prototypes/cg-all-functions.h',
         'cglib/gl-prototypes/cg-glsl-functions.h',
         'cglib/gl-prototypes/cg-fixed-functions.h',
-        'cglib/gl-prototypes/cg-in-gles2-core-functions.h',
-        'cglib/gl-prototypes/cg-gles2-functions.h',
         'cglib/gl-prototypes/cg-core-functions.h',
 
         'cglib/driver/gl/cg-attribute-gl-private.h',
@@ -276,9 +271,6 @@
 
         'cglib/driver/gl/gl/cg-texture-driver-gl.c',
         'cglib/driver/gl/gl/cg-driver-gl.c',
-
-        'cglib/driver/gl/gles/cg-driver-gles.c',
-        'cglib/driver/gl/gles/cg-texture-driver-gles.c',
 
         'cglib/winsys/cg-winsys-private.h',
         'cglib/winsys/cg-winsys-stub-private.h',
@@ -319,6 +311,17 @@
 	      ],
             }],
           ],
+
+          # Should have a separate feature condition for gles...
+          'sources': [
+            'cglib/cg-gles2-types.h',
+            'cglib/cg-gles2.h',
+            'cglib/cg-gles2-context.c',
+            'cglib/gl-prototypes/cg-in-gles2-core-functions.h',
+            'cglib/gl-prototypes/cg-gles2-functions.h',
+            'cglib/driver/gl/gles/cg-driver-gles.c',
+            'cglib/driver/gl/gles/cg-texture-driver-gles.c',
+          ]
         }],
         [ 'OS=="emscripten"', {
           'sources': [

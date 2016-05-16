@@ -35,6 +35,7 @@
 #include "cg-offscreen.h"
 #include "cg-framebuffer-private.h"
 #include "cg-attribute-private.h"
+#include "cg-texture-2d.h"
 
 typedef struct _cg_driver_vtable_t cg_driver_vtable_t;
 

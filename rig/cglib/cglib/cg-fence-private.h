@@ -35,6 +35,7 @@
 
 #include "cg-fence.h"
 #include "cg-winsys-private.h"
+#include "cg-gl-header.h"
 
 typedef enum {
     FENCE_TYPE_PENDING,

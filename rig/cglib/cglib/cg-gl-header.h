@@ -43,6 +43,7 @@
     #include <OpenGL/gl.h>
   #else
     #include <GL/gl.h>
+    #include <GL/glext.h>
   #endif
 
 #elif defined(CG_HAS_GLES2_SUPPORT)

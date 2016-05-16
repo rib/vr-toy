@@ -42,6 +42,11 @@
 #define GL_MIRRORED_REPEAT 0x8370
 #endif
 
+/* Missing from Windows 1.2 headers */
+#ifndef GL_CLAMP_TO_EDGE
+#define GL_CLAMP_TO_EDGE 0x812f
+#endif
+
 /*
  * XXX: keep the values in sync with the cg_pipeline_wrap_mode_t enum
  * so no conversion is actually needed.

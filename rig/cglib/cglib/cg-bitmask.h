@@ -62,12 +62,12 @@ CG_BEGIN_DECLS
 typedef struct _cg_bitmask_imaginary_type_t *CGlibBitmask;
 
 /* These are internal helper macros */
-#define _cg_bitmask_to_number(bitmask) ((unsigned long)(*bitmask))
+#define _cg_bitmask_to_number(bitmask) ((unsigned long)(uintptr_t)(*bitmask))
 #define _cg_bitmask_to_bits(bitmask) (_cg_bitmask_to_number(bitmask) >> 1UL)
 /* The least significant bit is set to mark that no array has been
    allocated yet */
 #define _cg_bitmask_from_bits(bits)                                            \
-    ((void *)((((unsigned long)(bits)) << 1UL) | 1UL))
+    ((void *)(uintptr_t)((((unsigned long)(bits)) << 1UL) | 1UL))
 
 /* Internal helper macro to determine whether this bitmask has a
    c_array_t allocated or whether the pointer is just used directly */

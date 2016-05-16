@@ -37,7 +37,7 @@
 #include <cglib/cg-defines.h>
 #include <cglib/cg-device.h>
 
-#ifndef CG_HAS_POLL_SUPPORT
+#ifdef CG_HAS_POLL_SUPPORT
 #include <poll.h>
 #endif
 

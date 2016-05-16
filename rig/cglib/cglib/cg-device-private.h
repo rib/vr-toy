@@ -191,8 +191,10 @@ struct _cg_device_t {
     bool have_last_offscreen_allocate_flags;
     cg_offscreen_allocate_flags_t last_offscreen_allocate_flags;
 
+#ifdef CG_HAS_GLES2_SUPPORT
     cg_gles2_context_t *current_gles2_context;
     c_queue_t gles2_context_stack;
+#endif
 
     /* This becomes true the first time the context is bound to an
      * onscreen buffer. This is used by cg-framebuffer-gl to determine

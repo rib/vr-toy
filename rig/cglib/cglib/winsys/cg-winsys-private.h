@@ -33,7 +33,10 @@
 
 #include "cg-renderer.h"
 #include "cg-onscreen.h"
+
+#ifdef CG_HAS_GLES2_SUPPORT
 #include "cg-gles2.h"
+#endif
 
 #ifdef CG_HAS_XLIB_SUPPORT
 #include "cg-texture-pixmap-x11-private.h"
@@ -94,8 +97,10 @@ typedef struct _cg_winsys_vtable_t {
 
     void (*device_deinit)(cg_device_t *dev);
 
+#ifdef CG_HAS_GLES2_SUPPORT
     void *(*device_create_gles2_context)(cg_device_t *dev,
                                          cg_error_t **error);
+#endif
 
     bool (*onscreen_init)(cg_onscreen_t *onscreen, cg_error_t **error);
 
@@ -150,6 +155,7 @@ typedef struct _cg_winsys_vtable_t {
         cg_texture_pixmap_x11_t *tex_pixmap);
 #endif
 
+#ifdef CG_HAS_GLES2_SUPPORT
     void (*save_device)(cg_device_t *dev);
 
     bool (*set_gles2_context)(cg_gles2_context_t *gles2_ctx,
@@ -158,6 +164,7 @@ typedef struct _cg_winsys_vtable_t {
     void (*restore_context)(cg_device_t *dev);
 
     void (*destroy_gles2_context)(cg_gles2_context_t *gles2_ctx);
+#endif
 
     void *(*fence_add)(cg_device_t *dev);
 

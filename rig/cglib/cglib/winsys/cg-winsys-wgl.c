@@ -428,9 +428,7 @@ create_window_class(cg_display_t *display, cg_error_t **error)
        destroyed */
 
     /* Generate a unique name containing the address of the display */
-    class_name_ascii = c_strdup_printf("CGlibWindow0x%0*" G_GINTPTR_MODIFIER "x",
-                                       sizeof(guintptr) * 2,
-                                       (guintptr)display);
+    class_name_ascii = c_strdup_printf("CGlibWindow%p", display);
     /* Convert it to WCHARs */
     class_name_wchar = c_malloc((strlen(class_name_ascii) + 1) * sizeof(WCHAR));
     for (src = class_name_ascii, dst = class_name_wchar; *src; src++, dst++)
@@ -480,7 +478,7 @@ create_context(cg_display_t *display, cg_error_t **error)
     if (wgl_display->dummy_hwnd == NULL) {
         wgl_display->dummy_hwnd =
             CreateWindowW((LPWSTR)MAKEINTATOM(wgl_display->window_class),
-                          L".",
+                            L".",
                           WS_OVERLAPPEDWINDOW,
                           CW_USEDEFAULT,
                           CW_USEDEFAULT,

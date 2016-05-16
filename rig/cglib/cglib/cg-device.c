@@ -311,7 +311,9 @@ cg_device_connect(cg_device_t *dev, cg_error_t **error)
     dev->current_draw_buffer_state_flushed = 0;
     dev->current_draw_buffer_changes = CG_FRAMEBUFFER_STATE_ALL;
 
+#ifdef CG_HAS_GLES2_SUPPORT
     c_queue_init(&dev->gles2_context_stack);
+#endif
 
     dev->current_pipeline = NULL;
     dev->current_pipeline_changes_since_flush = 0;
@@ -352,7 +354,7 @@ cg_device_connect(cg_device_t *dev, cg_error_t **error)
     dev->blit_texture_pipeline = NULL;
 
 #if defined(CG_HAS_GL_SUPPORT)
-    if ((dev->driver == CG_DRIVER_GL3)) {
+    if (dev->driver == CG_DRIVER_GL3) {
         GLuint vertex_array;
 
         /* In a forward compatible context, GL 3 doesn't support rendering
@@ -435,7 +437,9 @@ _cg_device_free(cg_device_t *dev)
     if (dev->blit_texture_pipeline)
         cg_object_unref(dev->blit_texture_pipeline);
 
+#ifdef CG_HAS_GLES2_SUPPORT
     c_warn_if_fail(dev->gles2_context_stack.length == 0);
+#endif
 
     if (dev->rectangle_byte_indices)
         cg_object_unref(dev->rectangle_byte_indices);

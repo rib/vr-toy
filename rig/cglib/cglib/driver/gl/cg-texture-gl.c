@@ -29,8 +29,6 @@
 
 #include <cglib-config.h>
 
-#include <strings.h>
-
 #include "cg-device-private.h"
 #include "cg-util-gl-private.h"
 #include "cg-texture-gl-private.h"
