@@ -129,6 +129,12 @@ FcOpen(const char *pathname, int flags, ...)
     return fd;
 }
 
+void
+FcClose(int fd)
+{
+    close(fd);
+}
+
 int
 FcMakeTempfile (char *template)
 {
@@ -143,7 +149,7 @@ FcMakeTempfile (char *template)
     {
 	int newfd = fcntl(fd, F_DUPFD_CLOEXEC, STDIN_FILENO);
 
-	close(fd);
+	FcClose(fd);
 	fd = newfd;
     }
 #  elif defined(FD_CLOEXEC)

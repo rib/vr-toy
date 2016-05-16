@@ -45,6 +45,7 @@
 #include <errno.h>
 
 #ifdef _WIN32
+#define close _close
 #ifdef __GNUC__
 typedef long long INT64;
 #define EPOCH_OFFSET 11644473600ll
@@ -417,7 +418,7 @@ FcIsFsMtimeBroken (const FcChar8 *dir)
 	FcStatFS statb;
 	int ret = FcFStatFs (fd, &statb);
 
-	close (fd);
+	FcClose (fd);
 	if (ret < 0)
 	    return FcFalse;
 

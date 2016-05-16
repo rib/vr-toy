@@ -762,6 +762,9 @@ FcPrivate FcChar16 *
 FcCharSetGetNumbers(const FcCharSet *c);
 
 /* fccompat.c */
+FcPrivate void
+FcClose(int fd);
+
 FcPrivate int
 FcOpen(const char *pathname, int flags, ...);
 

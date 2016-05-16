@@ -50,13 +50,14 @@
 #include "fcint.h"
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <time.h>
 
 #ifdef _WIN32
 #include <direct.h>
 #define mkdir(path,mode) _mkdir(path)
+#else
+#include <unistd.h>
 #endif
 
 #define NEW_NAME	".NEW"

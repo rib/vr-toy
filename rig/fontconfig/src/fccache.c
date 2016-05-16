@@ -219,7 +219,7 @@ FcDirCacheProcess (FcConfig *config, const FcChar8 *dir,
         fd = FcDirCacheOpenFile (cache_hashed, &file_stat);
         if (fd >= 0) {
 	    ret = (*callback) (config, fd, &file_stat, &dir_stat, closure);
-	    close (fd);
+	    FcClose (fd);
 	    if (ret)
 	    {
 		if (cache_file_ret)
@@ -733,7 +733,7 @@ FcDirCacheLoadFile (const FcChar8 *cache_file, struct stat *file_stat)
     if (fd < 0)
 	return NULL;
     cache = FcDirCacheMapFd (FcConfigGetCurrent (), fd, file_stat, NULL);
-    close (fd);
+    FcClose (fd);
     return cache;
 }
 
@@ -1002,7 +1002,7 @@ FcDirCacheWrite (FcCache *cache, FcConfig *config)
 	goto bail5;
     }
 
-    close(fd);
+    FcClose(fd);
     if (!FcAtomicReplaceOrig(atomic))
         goto bail4;
 
@@ -1028,7 +1028,7 @@ FcDirCacheWrite (FcCache *cache, FcConfig *config)
     return FcTrue;
 
  bail5:
-    close (fd);
+    FcClose (fd);
  bail4:
     FcAtomicUnlock (atomic);
  bail3:
