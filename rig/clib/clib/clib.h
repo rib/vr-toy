@@ -52,6 +52,9 @@
 #ifdef WIN32
 /* For alloca */
 #include <malloc.h>
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h> /* Tls{Get,Set}Value */
+#undef WIN32_LEAN_AND_MEAN
 #endif
 
 #ifdef USE_UV
@@ -646,16 +649,10 @@ double c_ascii_strtod(const char *nptr, char **endptr);
 #define c_ascii_isxdigit(c) (isxdigit(c) != 0)
 
 /* FIXME: c_strcasecmp supports utf8 unicode stuff */
-#ifdef _MSC_VER
-#define c_strcasecmp stricmp
-#define c_strncasecmp strnicmp
-#define c_strstrip(a) c_strchug(c_strchomp(a))
-#else
 #define c_strcasecmp strcasecmp
 #define c_ascii_strtoull strtoull
 #define c_strncasecmp strncasecmp
 #define c_strstrip(a) c_strchug(c_strchomp(a))
-#endif
 #define c_ascii_strdup strdup
 
 #define C_STR_DELIMITERS "_-|> <."
