@@ -40,6 +40,8 @@ static UMutex   globalMutex = U_MUTEX_INITIALIZER;
 
 #elif U_PLATFORM_HAS_WIN32_API
 
+# include <windows.h>
+
 //-------------------------------------------------------------------------------------------
 //
 //    Windows Specific Definitions
@@ -69,7 +71,7 @@ U_NAMESPACE_BEGIN
 U_COMMON_API UBool U_EXPORT2 umtx_initImplPreInit(UInitOnce &uio) {
     for (;;) {
         int32_t previousState = InterlockedCompareExchange(
-#if (U_PLATFORM == U_PF_MINGW) || (U_PLATFORM == U_PF_CYGWIN)
+#if (U_PLATFORM == U_PF_MINGW) || (U_PLATFORM == U_PF_CYGWIN) || defined(__clang__)
            (LONG volatile *) // this is the type given in the API doc for this function.
 #endif
             &uio.fState,  //  Destination

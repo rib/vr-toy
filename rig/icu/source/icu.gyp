@@ -12,14 +12,9 @@
     'defines': [
       'U_DISABLE_RENAMING=1',
       'U_HAVE_ATOMIC=1',
-      'U_HAVE_ELF_H',
 
        # TODO: make conditional...
       'HAVE_DIRENT_H=1',
-      'HAVE_DLFCN_H=1',
-      'HAVE_DLOPEN=1',
-      'HAVE_ELF_H=1',
-      'HAVE_GETTIMEOFDAY=1',
       'HAVE_INTTYPES_H=1',
       'HAVE_MEMORY_H=1',
       'HAVE_STDINT_H=1',
@@ -39,32 +34,31 @@
       'PACKAGE_VERSION="53.1.0"',
       'STDC_HEADERS=1',
     ],
+    'conditions': [
+      [ 'OS!="win"', {
+        'defines': [
+          'U_HAVE_ELF_H',
+
+          'HAVE_DLFCN_H=1',
+          'HAVE_DLOPEN=1',
+          'HAVE_ELF_H=1',
+          'HAVE_GETTIMEOFDAY=1',
+        ],
+      }]
+    ],
     'include_dirs': [
       'common',
       'i18n',
     ],
   },
 
-  'actions': [
-    {
-      'action_name': 'rig-proto',
-      'inputs': [
-	'rig/rig.proto'
-      ],
-      'outputs': [
-        'rig/rig.pb-c.h',
-        'rig/rig.pb-c.c'
-      ],
-      'actions': [ 'protoc-c', '--c_out=rig', 'rig.proto' ]
-    }
-  ],
-
   'targets': [
     {
       'target_name': 'icuuc',
-      'type': '<(library)',
+      'type': 'shared_library',
       'toolsets': [ 'host', 'target' ],
       'dependencies': [
+         'icudata'
        ],
       'include_dirs': [
         '.',
@@ -294,13 +288,19 @@
             '-I<(DEPTH)/../android-ndk/sources/android/support/include',
           ],
         }],
+        ['OS=="win"', {
+          'libraries': [
+            '-ladvapi32'
+          ]
+        }],
       ],
     },
     {
       'target_name': 'icui18n',
-      'type': '<(library)',
+      'type': 'shared_library',
       'toolsets': [ 'host', 'target' ],
       'dependencies': [
+        'icuuc'
        ],
       'include_dirs': [
         '.',
@@ -726,7 +726,7 @@
     },
     {
       'target_name': 'icudata',
-      'type': '<(library)',
+      'type': 'shared_library',
       'toolsets': [ 'host', 'target' ],
       'dependencies': [
        ],
@@ -763,9 +763,11 @@
     },
     {
       'target_name': 'icuio',
-      'type': '<(library)',
+      'type': 'shared_library',
       'toolsets': [ 'host' ],
       'dependencies': [
+        'icui18n',
+        'icuuc'
        ],
       'include_dirs': [
         '.',
@@ -773,6 +775,7 @@
       ],
       'all_dependent_settings': {
         'include_dirs': [
+          'io'
 	],
       },
       'defines': [
@@ -818,7 +821,7 @@
     },
     {
       'target_name': 'ctestfw',
-      'type': 'static_library',
+      'type': 'shared_library',
       'dependencies': [
        ],
       'include_dirs': [
@@ -850,9 +853,11 @@
     },
     {
       'target_name': 'tool_utils',
-      'type': 'static_library',
+      'type': 'shared_library',
       'toolsets': [ 'host' ],
       'dependencies': [
+        'icuuc',
+        'icui18n'
        ],
       'include_dirs': [
         '.',
@@ -937,8 +942,12 @@
 	'tools/makeconv/makeconv.h',
 	'tools/makeconv/ucnvstat.c',
       ],
-      'libraries': [
-	'-ldl'
+      'conditions': [
+        [ 'OS!="win"', {
+          'libraries': [
+	    '-ldl'
+          ]
+        }]
       ]
     },
     {
@@ -975,8 +984,12 @@
 	'tools/genrb/wrtjava.c',
 	'tools/genrb/wrtxml.cpp',
       ],
-      'libraries': [
-	'-ldl'
+      'conditions': [
+        [ 'OS!="win"', {
+          'libraries': [
+            '-ldl'
+          ]
+        }]
       ]
     },
     {
@@ -993,9 +1006,13 @@
       'sources': [
 	'tools/genrb/derb.c',
       ],
-      'libraries': [
-	'-ldl',
-	'-lstdc++'
+      'conditions': [
+        [ 'OS!="win"', {
+          'libraries': [
+            '-ldl',
+            '-lstdc++'
+          ]
+        }]
       ]
     },
     {
@@ -1012,9 +1029,13 @@
       'sources': [
 	'tools/genccode/genccode.c',
       ],
-      'libraries': [
-	'-ldl',
-	'-lstdc++'
+      'conditions': [
+        [ 'OS!="win"', {
+          'libraries': [
+            '-ldl',
+            '-lstdc++'
+          ]
+        }]
       ]
     },
     {
@@ -1031,9 +1052,13 @@
       'sources': [
 	'tools/gencmn/gencmn.c',
       ],
-      'libraries': [
-	'-ldl',
-	'-lstdc++'
+      'conditions': [
+        [ 'OS!="win"', {
+          'libraries': [
+            '-ldl',
+            '-lstdc++'
+          ]
+        }]
       ]
     },
     {
@@ -1050,9 +1075,13 @@
       'sources': [
 	'tools/gencnval/gencnval.c',
       ],
-      'libraries': [
-	'-ldl',
-	'-lstdc++'
+      'conditions': [
+        [ 'OS!="win"', {
+          'libraries': [
+            '-ldl',
+            '-lstdc++'
+          ]
+        }]
       ]
     },
     {
@@ -1069,9 +1098,13 @@
       'sources': [
 	'tools/gendict/gendict.cpp',
       ],
-      'libraries': [
-	'-ldl',
-	'-lstdc++'
+      'conditions': [
+        [ 'OS!="win"', {
+          'libraries': [
+            '-ldl',
+            '-lstdc++'
+          ]
+        }]
       ]
     },
     {
@@ -1090,9 +1123,13 @@
 	'tools/gentest/gentest.h',
 	'tools/gentest/gentest.c',
       ],
-      'libraries': [
-	'-ldl',
-	'-lstdc++'
+      'conditions': [
+        [ 'OS!="win"', {
+          'libraries': [
+            '-ldl',
+            '-lstdc++'
+          ]
+        }]
       ]
     },
     {
@@ -1111,9 +1148,13 @@
 	'tools/gennorm2/n2builder.cpp',
 	'tools/gennorm2/n2builder.h',
       ],
-      'libraries': [
-	'-ldl',
-	'-lstdc++'
+      'conditions': [
+        [ 'OS!="win"', {
+          'libraries': [
+            '-ldl',
+            '-lstdc++'
+          ]
+        }]
       ]
     },
     {
@@ -1130,9 +1171,13 @@
       'sources': [
 	'tools/genbrk/genbrk.cpp',
       ],
-      'libraries': [
-	'-ldl',
-	'-lstdc++'
+      'conditions': [
+        [ 'OS!="win"', {
+          'libraries': [
+            '-ldl',
+            '-lstdc++'
+          ]
+        }]
       ]
     },
     {
@@ -1151,9 +1196,13 @@
 	'tools/gensprep/gensprep.h',
 	'tools/gensprep/store.c',
       ],
-      'libraries': [
-	'-ldl',
-	'-lstdc++'
+      'conditions': [
+        [ 'OS!="win"', {
+          'libraries': [
+            '-ldl',
+            '-lstdc++'
+          ]
+        }]
       ]
     },
     {
@@ -1170,9 +1219,13 @@
       'sources': [
 	'tools/icuinfo/icuinfo.cpp',
       ],
-      'libraries': [
-	'-ldl',
-	'-lstdc++'
+      'conditions': [
+        [ 'OS!="win"', {
+          'libraries': [
+            '-ldl',
+            '-lstdc++'
+          ]
+        }]
       ]
     },
     {
@@ -1189,9 +1242,13 @@
       'sources': [
 	'tools/icupkg/icupkg.cpp',
       ],
-      'libraries': [
-	'-ldl',
-	'-lstdc++'
+      'conditions': [
+        [ 'OS!="win"', {
+          'libraries': [
+            '-ldl',
+            '-lstdc++'
+          ]
+        }]
       ]
     },
     {
@@ -1208,9 +1265,13 @@
       'sources': [
 	'tools/icuswap/icuswap.cpp',
       ],
-      'libraries': [
-	'-ldl',
-	'-lstdc++'
+      'conditions': [
+        [ 'OS!="win"', {
+          'libraries': [
+            '-ldl',
+            '-lstdc++'
+          ]
+        }]
       ]
     },
     {
@@ -1229,9 +1290,13 @@
 	'tools/pkgdata/pkgtypes.c',
 	'tools/pkgdata/pkgtypes.h',
       ],
-      'libraries': [
-	'-ldl',
-	'-lstdc++'
+      'conditions': [
+        [ 'OS!="win"', {
+          'libraries': [
+            '-ldl',
+            '-lstdc++'
+          ]
+        }]
       ]
     },
     {
@@ -1248,9 +1313,13 @@
       'sources': [
 	'tools/gencfu/gencfu.cpp',
       ],
-      'libraries': [
-	'-ldl',
-	'-lstdc++'
+      'conditions': [
+        [ 'OS!="win"', {
+          'libraries': [
+            '-ldl',
+            '-lstdc++'
+          ]
+        }]
       ]
     }
   ]
