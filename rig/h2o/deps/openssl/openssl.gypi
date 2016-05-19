@@ -1170,6 +1170,8 @@
       'OPENSSL_NO_DYNAMIC_ENGINE',
       # to avoid build errors on Win. See openssl/engines/e_capi.c
       'OPENSSL_NO_CAPIENG',
+      'UNICODE',
+      '_UNICODE',
     ],
     'openssl_defines_all_non_win': [
       'DSO_DLFCN',
@@ -1270,6 +1272,7 @@
       'OPENSSL_SYSNAME_WIN32',
     ],
     'openssl_default_libraries_win': [
+      '-lws2_32.lib',
       '-lgdi32.lib',
       '-luser32.lib',
     ],

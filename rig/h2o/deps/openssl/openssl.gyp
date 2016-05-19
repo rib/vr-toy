@@ -4,9 +4,9 @@
 
 {
   'variables': {
-    'is_clang': 0,
+    'is_clang': 1,
     'gcc_version': 0,
-    'openssl_no_asm%': 0,
+    'openssl_no_asm%': 1,
     'llvm_version%': 0,
     'xcode_version%': 0,
     'gas_version%': 0,
@@ -15,7 +15,7 @@
   'targets': [
     {
       'target_name': 'openssl',
-      'type': '<(library)',
+      'type': 'shared_library',
       'includes': ['openssl.gypi'],
       'sources': ['<@(openssl_sources)'],
       'sources/': [
@@ -24,7 +24,7 @@
       ],
       'conditions': [
         # FIPS
-        ['openssl_fips != ""', {
+        ['openssl_fips != "false"', {
           'defines': [
             'OPENSSL_FIPS',
           ],
@@ -51,13 +51,6 @@
               '__BIG_ENDIAN=4321',
               '__BYTE_ORDER=__BIG_ENDIAN',
               '__FLOAT_WORD_ORDER=__BIG_ENDIAN'],
-        }],
-        [ 'node_byteorder=="big"', {
-            # Define Big Endian
-            'defines': ['B_ENDIAN']
-          }, {
-            # Define Little Endian
-           'defines':['L_ENDIAN']
         }],
         ['openssl_no_asm!=0', {
           # Disable asm
@@ -141,7 +134,10 @@
   'target_defaults': {
     'includes': ['openssl.gypi'],
     'include_dirs': ['<@(openssl_default_include_dirs)'],
-    'defines': ['<@(openssl_default_defines_all)'],
+    'defines': [
+        '<@(openssl_default_defines_all)',
+        'L_ENDIAN'
+    ],
     'conditions': [
       ['OS=="win"', {
         'defines': ['<@(openssl_default_defines_win)'],

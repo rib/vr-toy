@@ -12,7 +12,8 @@
       'target_name': 'libh2o',
       'type': 'static_library',
       'dependencies': [
-          '../wslay/wslay.gyp:libwslay'
+          '../wslay/wslay.gyp:libwslay',
+          'deps/openssl/openssl.gyp:openssl'
        ],
       'include_dirs': [
         'include',
