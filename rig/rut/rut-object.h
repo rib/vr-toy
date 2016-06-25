@@ -26,8 +26,9 @@
  * SOFTWARE.
  */
 
-#ifndef _RUT_OBJECT_H_
-#define _RUT_OBJECT_H_
+#pragma once
+
+#include <clib.h>
 
 #include "rut-type.h"
 #include "rut-refcount-debug.h"
@@ -166,5 +167,3 @@ rut_object_release(void *object, void *owner)
 }
 
 C_END_DECLS
-
-#endif /* _RUT_OBJECT_H_ */

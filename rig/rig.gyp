@@ -1033,7 +1033,6 @@
             'rig/rig-curses-debug.c'
           ]
         }],
-
       ]
     },
     {
