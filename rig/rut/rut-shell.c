@@ -413,8 +413,11 @@ rut_shell_new(rut_shell_t *main_shell,
               rut_shell_paint_callback_t paint,
               void *user_data)
 {
-    rut_shell_t *shell =
-        rut_object_alloc0(rut_shell_t, &rut_shell_type, _rut_shell_init_type);
+    rut_shell_t *shell;
+
+    rut_init();
+
+    shell = rut_object_alloc0(rut_shell_t, &rut_shell_type, _rut_shell_init_type);
 
     shell->input_queue = rut_input_queue_new(shell);
 
@@ -1538,12 +1541,20 @@ rut_get_thread_current_shell(void)
     return c_tls_get(&rut_shell_tls);
 }
 
-void
-rut_init(void)
+static c_once_t rut_init_once = C_ONCE_INIT;
+
+static void
+_rut_init(void)
 {
 #ifdef RUT_ENABLE_REFCOUNT_DEBUG
     rut_refcount_debug_init();
 #endif
 
     c_tls_init(&rut_shell_tls, NULL /* destroy */);
+}
+
+void
+rut_init(void)
+{
+    c_once(&rut_init_once, _rut_init);
 }

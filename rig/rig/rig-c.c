@@ -1220,7 +1220,11 @@ stub_engine_init_cb(rut_shell_t *shell, void *user_data)
 r_engine_t *
 r_engine_new(REngineConfig *config)
 {
-    r_engine_t *stub_engine = rut_object_alloc0(
+    r_engine_t *stub_engine;
+
+    rut_init();
+
+    stub_engine = rut_object_alloc0(
         r_engine_t, &r_engine_type, _r_engine_init_type);
 
 #ifdef __EMSCRIPTEN__

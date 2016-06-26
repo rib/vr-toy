@@ -140,8 +140,12 @@ _rig_engine_new_full(rut_shell_t *shell,
                      rig_frontend_t *frontend,
                      rig_simulator_t *simulator)
 {
-    rig_engine_t *engine = rut_object_alloc0(
-        rig_engine_t, &rig_engine_type, _rig_engine_init_type);
+    rig_engine_t *engine;
+
+    rut_init();
+
+    engine = rut_object_alloc0(rig_engine_t, &rig_engine_type,
+                               _rig_engine_init_type);
 
     engine->shell = shell;
 
