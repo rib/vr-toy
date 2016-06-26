@@ -27,7 +27,11 @@
 #include <string.h>
 #include <assert.h>
 #include <stdio.h>
+#ifdef _WIN32
+#include <Winsock2.h>
+#else
 #include <arpa/inet.h>
+#endif
 
 #include "wslay_queue.h"
 #include "wslay_frame.h"
