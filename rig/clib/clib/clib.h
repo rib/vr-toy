@@ -1687,8 +1687,19 @@ static inline void c_mutex_unlock(c_mutex_t *mutex)
 {
     uv_mutex_unlock((uv_mutex_t *)mutex);
 }
+
+typedef uv_once_t c_once_t;
+#define C_ONCE_INIT UV_ONCE_INIT
+
+static inline void c_once(c_once_t *once, void (*callback)(void))
+{
+    uv_once((uv_once_t *)once, callback);
+}
 #else
 typedef int c_mutex_t;
+typedef bool c_once_t;
+
+#define C_ONCE_INIT false
 
 #  ifndef C_SUPPORTS_THREADS
 static inline void c_mutex_init(c_mutex_t *mutex) {}
@@ -1696,12 +1707,20 @@ static inline void c_mutex_destroy(c_mutex_t *mutex) {}
 static inline void c_mutex_lock(c_mutex_t *mutex) {}
 static inline bool c_mutex_trylock(c_mutex_t *mutex) { return true; }
 static inline void c_mutex_unlock(c_mutex_t *mutex) {}
+static inline void c_once(c_once_t *once, void (*callback)(void))
+{
+    if (!*once) {
+        callback();
+        *once = true;
+    }
+}
 #  else
 static inline void c_mutex_init(c_mutex_t *mutex) { c_assert_not_reached(); }
 static inline void c_mutex_destroy(c_mutex_t *mutex) { c_assert_not_reached(); }
 static inline void c_mutex_lock(c_mutex_t *mutex) { c_assert_not_reached(); }
 static inline bool c_mutex_trylock(c_mutex_t *mutex) { c_assert_not_reached(); return true; }
 static inline void c_mutex_unlock(c_mutex_t *mutex) { c_assert_not_reached(); }
+static inline void c_once(c_once_t *once, void (*callback)(void)) { c_assert_not_reached(); }
 #  endif
 #endif
 
