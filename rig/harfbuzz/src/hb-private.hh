@@ -236,9 +236,7 @@ static inline unsigned int ARRAY_LENGTH (const Type (&)[n]) { return n; }
 #define HB_STMT_START do
 #define HB_STMT_END   while (0)
 
-#define _ASSERT_STATIC1(_line, _cond)	HB_UNUSED typedef int _static_assert_on_line_##_line##_failed[(_cond)?1:-1]
-#define _ASSERT_STATIC0(_line, _cond)	_ASSERT_STATIC1 (_line, (_cond))
-#define ASSERT_STATIC(_cond)		_ASSERT_STATIC0 (__LINE__, (_cond))
+#define ASSERT_STATIC(_cond)		static_assert(_cond)
 
 template <unsigned int cond> class hb_assert_constant_t {};
 
@@ -266,15 +264,13 @@ ASSERT_STATIC (sizeof (hb_var_int_t) == 4);
 
 /* We like our types POD */
 
-#define _ASSERT_TYPE_POD1(_line, _type)	union _type_##_type##_on_line_##_line##_is_not_POD { _type instance; }
-#define _ASSERT_TYPE_POD0(_line, _type)	_ASSERT_TYPE_POD1 (_line, _type)
-#define ASSERT_TYPE_POD(_type)		_ASSERT_TYPE_POD0 (__LINE__, _type)
+#define ASSERT_TYPE_POD(_type)	static_assert(sizeof(_type) > 0)
 
 #ifdef __GNUC__
 # define _ASSERT_INSTANCE_POD1(_line, _instance) \
 	HB_STMT_START { \
 		typedef __typeof__(_instance) _type_##_line; \
-		_ASSERT_TYPE_POD1 (_line, _type_##_line); \
+		ASSERT_TYPE_POD (_type_##_line); \
 	} HB_STMT_END
 #else
 # define _ASSERT_INSTANCE_POD1(_line, _instance)	typedef int _assertion_on_line_##_line##_not_tested
