@@ -46,15 +46,17 @@
 #  include <windows.h>
 
 #  include <io.h>
+#  include <fcntl.h>
 #  define close _close
 #  define O_CREAT _O_CREAT
 #  define O_EXCL _O_EXCL
-#  define O_RDWR _O_RDRW
+#  define O_RDWR _O_RDWR
 #  define O_BINARY _O_BINARY
 #  define access _access
 #  define F_OK 0
 #  define W_OK 2
 #  define R_OK 4
+typedef int mode_t;
 #endif
 
 #endif /* _FCWINDOWS_H_ */

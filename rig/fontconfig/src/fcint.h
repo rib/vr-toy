@@ -40,7 +40,9 @@
 #include <limits.h>
 #include <float.h>
 #include <math.h>
+#ifdef __unix__
 #include <unistd.h>
+#endif
 #include <stddef.h>
 #include <sys/types.h>
 #include <sys/stat.h>
