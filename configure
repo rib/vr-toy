@@ -285,6 +285,8 @@ for name, opt in options.items():
                     sys.exit(opt["pkg-config"] + " required for enabling " + name + " support is missing")
             opt["enabled"] = True
             enabled[name] = opt
+        else:
+            opt["enabled"] = False
     else:
         if opt["enabled"]:
             enabled[name] = opt
