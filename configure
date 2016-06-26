@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 import glob
 import platform
@@ -7,14 +7,14 @@ import subprocess
 import sys
 import argparse
 
-try:
-    import multiprocessing.synchronize
-    gyp_parallel_support = True
-except ImportError:
-    gyp_parallel_support = False
+#try:
+#    import multiprocessing.synchronize
+#    gyp_parallel_support = True
+#except ImportError:
+#    gyp_parallel_support = False
 
+gyp_parallel_support = False
 
-CC = os.environ.get('CC', 'cc')
 script_dir = os.path.dirname(__file__)
 src_dir = os.path.normpath(script_dir)
 output_dir = os.path.join(os.path.abspath(src_dir), 'out')
@@ -26,23 +26,32 @@ except ImportError:
     print('You need to install gyp in build/gyp first. See the README.')
     sys.exit(42)
 
+if "CYGWIN" in platform.system():
+    sys.exit("Don't run with Cygwin Python, use a Python for Windows release")
 
 def host_arch():
     machine = platform.machine()
     if machine == 'i386': return 'ia32'
     if machine == 'x86_64': return 'x64'
+    if machine == 'AMD64': return 'x64'
     if machine.startswith('arm'): return 'arm'
     return machine  # Return as-is and hope for the best.
 
 def pkg_config_exists(pkg_name):
-    try:
-        subprocess.check_call(["pkg-config", "--exists", pkg_name])
-        return True
-    except:
+    if platform.system() == "Linux":
+        try:
+            subprocess.check_call(["pkg-config", "--exists", pkg_name])
+            return True
+        except:
+            return False
+    else:
         return False
 
 def pkg_config_get(pkg_name, arg):
-    return subprocess.check_output(["pkg-config", arg, pkg_name])
+    if platform.system() == "Linux":
+        return subprocess.check_output(["pkg-config", arg, pkg_name])
+    else:
+        return ""
 
 def pkg_config_variable(pkg_name, variable):
     return subprocess.check_output(["pkg-config", "--variable=" + variable, pkg_name]).strip()
@@ -54,8 +63,6 @@ def run_gyp(args):
         sys.exit(rc)
 
 def add_option(parser, name, opt):
-    if opt["enabled"] and "pkg-config" in opt and platform.system() == "Linux":
-        opt["enabled"] = pkg_config_exists(opt["pkg-config"])
     if not opt["enabled"]:
         enable_help = "Enable " + opt["help"]
         disable_help = argparse.SUPPRESS
@@ -80,12 +87,14 @@ parser.add_argument("--enable-shared", action='store_true',
 subst = {
         "CG_DEFINES": "",
         "RIG_VERSION": "2",
+        "U_MAJOR_VERSION": "53",
+        "U_MINOR_VERSION": "1",
+        "U_PATCHLEVEL_VERSION": "1",
 }
 enabled = {}
 options = {
         "_": {
             "enabled": True,
-            "pkg-config": "protobuf gdk-pixbuf-2.0",
         },
         "debug": {
             "help": "debug support",
@@ -142,14 +151,12 @@ options = {
             "enabled": True,
             "pkg-config": "gl",
             "public_defines": { "CG_HAS_GLX_SUPPORT", "CG_HAS_GL_SUPPORT", "CG_HAS_XLIB_SUPPORT", "CG_HAS_X11_SUPPORT" },
-            "conditionals": { "enable_glx", "enable_gl" }
         },
         "egl": {
             "help": "EGL support",
             "enabled": True,
             "pkg-config": "egl",
             "public_defines": { "CG_HAS_EGL_SUPPORT" },
-            "conditionals": { "enable_gl" }
         },
         "egl_wayland": {
             "help": "Wayland EGL support",
@@ -187,22 +194,76 @@ options = {
             "pkg-config": "ncursesw",
             "defines": [ "USE_NCURSES" ],
         },
+        "conditions": [
+            [ 'OS=="win"', {
+                "_": {
+                    "public_defines": { "CG_HAS_GL_SUPPORT", "CG_HAS_WIN32_SUPPORT" }
+                }
+            }]
+        ]
 }
 
 output = {
         "rig/cglib/cglib/cg-defines.h",
+        "rig/icu/source/common/unicode/uvernum.h",
         "rig/rig/rig-defines.h",
 }
 
+# Lazily nabbed from http://stackoverflow.com/questions/7204805/dictionaries-of-dictionaries-merge
+def merge(a, b, path=None):
+    "merges b into a"
+    if path is None: path = []
+    for key in b:
+        if key in a:
+            if isinstance(a[key], dict) and isinstance(b[key], dict):
+                merge(a[key], b[key], path + [str(key)])
+            elif a[key] == b[key]:
+                pass # same leaf value
+            else:
+                raise Exception('Conflict at %s' % '.'.join(path + [str(key)]))
+        else:
+            a[key] = b[key]
+    return a
+
+def add_conditionals(_dict):
+
+    conditions = _dict['conditions']
+    del _dict['conditions']
+
+    for cond in conditions:
+        cond_vars = {}
+        if platform.system() == "Windows":
+            cond_vars['OS'] = "win"
+        elif platform.system() == "Linux":
+            cond_vars['OS'] = "linux"
+
+        expr = cond[0]
+        if eval(expr, cond_vars):
+            _dict = merge(_dict, cond[1])
+        elif len(cond) >= 3:
+            _dict = merge(_dict, cond[2])
+
+    return _dict
+
+
+options = add_conditionals(options)
+
 for name, opt in options.items():
-    if "help" in opt:
-        add_option(parser, name, opt)
+    if name == "conditions":
+        continue
     if "defines" not in opt:
         opt["defines"] = []
     if "includes" not in opt:
         opt["includes"] = []
     if "ldflags" not in opt:
         opt["ldflags"] = []
+    if opt["enabled"] and "pkg-config" in opt:
+        if platform.system() == "Linux":
+            opt["enabled"] = pkg_config_exists(opt["pkg-config"])
+        else:
+            opt["enabled"] = False
+    if "help" in opt:
+        add_option(parser, name, opt)
 
 opt_args = parser.parse_args()
 opt_args_dict = vars(opt_args)
@@ -212,7 +273,8 @@ if opt_args.host != None and "emscripten" in opt_args.host:
 else:
     use_libuv = True
 
-options['_']["defines"].append("ICU_DATA_DIR=\"" + pkg_config_variable("icu-uc", "prefix") + "/share\"")
+#options['_']["defines"].append("ICU_DATA_DIR=\"" + pkg_config_variable("icu-uc", "prefix") + "/share\"")
+options['_']["defines"].append("ICU_DATA_DIR=\"" + opt_args.prefix + "/share\"")
 options['_']["defines"].append("RIG_BIN_DIR=\"" + opt_args.prefix + "/bin\"")
 
 for name, opt in options.items():
@@ -258,7 +320,7 @@ for name, opt in options.items():
 if opt_args.host != None and "emscripten" in opt_args.host:
     gyp_config.write("    'OS%': 'emscripten',\n")
 
-if sys.platform == 'win32':
+if platform.system() == "Windows":
     gyp_config.write("    'os_posix%': '0',\n")
 else:
     gyp_config.write("    'os_posix%': '1',\n")
@@ -322,6 +384,16 @@ gyp_args = []
 
 gyp_args.append(os.path.join(src_dir, 'vr-toy.gyp'))
 
+if platform.system() == "Windows":
+    os.environ['CC'] = "clang-cl.exe"
+    os.environ['CXX'] = "clang-cl.exe"
+    os.environ['GYP_MSVS_VERSION'] = "2015"
+    gyp_args.append('--no-parallel')
+    gyp_args.append('-Dtarget_arch=' + host_arch())
+    gyp_args.append('-Dos_posix=0')
+else:
+    gyp_args.append('-Dos_posix=1')
+
 gyp_args.extend('-f ninja'.split())
 #gyp_args.extend('-f make'.split())
 
@@ -342,10 +414,8 @@ gyp_args.append('-Dlibrary=shared_library')
 if opt_args.enable_shared:
     gyp_args.append('-Drig_library=shared_library')
 
-if sys.platform == 'win32':
-    # Override the Gyp default and require a half-modern C compiler...
-    if not os.environ.get('GYP_MSVS_VERSION'):
-        os.environ['GYP_MSVS_VERSION'] = '2015'
+if platform.system() == "Windows":
+    gyp_args.append('-DOS=win')
 
 if use_libuv:
     subst["CG_DEFINES"] = subst["CG_DEFINES"] + "#define CG_HAS_UV_SUPPORT\n"
