@@ -142,6 +142,7 @@ static struct st_h2o_uv_socket_t *create_socket(h2o_loop_t *loop)
 
 int do_export(h2o_socket_t *_sock, h2o_socket_export_t *info)
 {
+#ifdef __linux__
     struct st_h2o_uv_socket_t *sock = (void *)_sock;
     uv_os_fd_t fd;
 
@@ -154,6 +155,7 @@ int do_export(h2o_socket_t *_sock, h2o_socket_export_t *info)
      */
     if ((info->fd = dup(fd)) == -1)
         return -1;
+#endif
     return 0;
 }
 

@@ -162,7 +162,7 @@ static ssize_t parse_proxy_line(char *src, size_t len, struct sockaddr *sa, sock
 
     char *p = src, *end = p + len;
     void *addr;
-    in_port_t *port;
+    uint16_t *port;
 
     /* "PROXY "*/
     EXPECT_CHAR('P');

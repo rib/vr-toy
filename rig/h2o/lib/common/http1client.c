@@ -19,12 +19,16 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
+#ifdef _WIN32
+#include <Winsock2.h>
+#else
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#include <sys/types.h>
 #include <sys/un.h>
+#endif
+#include <sys/types.h>
 #include "picohttpparser.h"
 #include "h2o/string_.h"
 #include "h2o/hostinfo.h"
@@ -446,6 +450,7 @@ void h2o_http1client_connect(h2o_http1client_t **_client, void *data, h2o_http1c
             return;
         }
     }
+#ifdef __unix__
     { /* directly call connect(2) if `host` refers to an UNIX-domain socket */
         struct sockaddr_un sa;
         const char *to_sa_err;
@@ -458,6 +463,7 @@ void h2o_http1client_connect(h2o_http1client_t **_client, void *data, h2o_http1c
             return;
         }
     }
+#endif
     /* resolve destination and then connect */
     client->_getaddr_req =
         h2o_hostinfo_getaddr(ctx->getaddr_receiver, host, h2o_iovec_init(serv, sprintf(serv, "%u", (unsigned)port)), AF_UNSPEC,

@@ -22,6 +22,10 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
+#ifdef _WIN32
+#define strcasecmp _stricmp
+#define strncasecmp _strnicmp
+#endif
 #include "h2o.h"
 #include "h2o/configurator.h"
 

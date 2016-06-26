@@ -20,7 +20,11 @@
  * IN THE SOFTWARE.
  */
 #include <assert.h>
+#ifdef H2O_USE_LIBUV
+#include <uv.h>
+#else
 #include <pthread.h>
+#endif
 #include "cloexec.h"
 #include "h2o/multithread.h"
 
@@ -33,7 +37,7 @@ struct st_h2o_multithread_queue_t {
         h2o_socket_t *read;
     } async;
 #endif
-    pthread_mutex_t mutex;
+    h2o_mutex_t mutex;
     struct {
         h2o_linklist_t active;
         h2o_linklist_t inactive;
@@ -42,7 +46,7 @@ struct st_h2o_multithread_queue_t {
 
 static void queue_cb(h2o_multithread_queue_t *queue)
 {
-    pthread_mutex_lock(&queue->mutex);
+    h2o_mutex_lock(&queue->mutex);
 
     while (!h2o_linklist_is_empty(&queue->receivers.active)) {
         h2o_multithread_receiver_t *receiver =
@@ -56,13 +60,13 @@ static void queue_cb(h2o_multithread_queue_t *queue)
         h2o_linklist_insert(&queue->receivers.inactive, &receiver->_link);
 
         /* dispatch the messages */
-        pthread_mutex_unlock(&queue->mutex);
+        h2o_mutex_unlock(&queue->mutex);
         receiver->cb(receiver, &messages);
         assert(h2o_linklist_is_empty(&messages));
-        pthread_mutex_lock(&queue->mutex);
+        h2o_mutex_lock(&queue->mutex);
     }
 
-    pthread_mutex_unlock(&queue->mutex);
+    h2o_mutex_unlock(&queue->mutex);
 }
 
 #if H2O_USE_LIBUV
@@ -110,7 +114,7 @@ h2o_multithread_queue_t *h2o_multithread_create_queue(h2o_loop_t *loop)
 #else
     init_async(queue, loop);
 #endif
-    pthread_mutex_init(&queue->mutex, NULL);
+    h2o_mutex_init(&queue->mutex);
     h2o_linklist_init_anchor(&queue->receivers.active);
     h2o_linklist_init_anchor(&queue->receivers.inactive);
 
@@ -128,7 +132,7 @@ void h2o_multithread_destroy_queue(h2o_multithread_queue_t *queue)
     h2o_socket_close(queue->async.read);
     close(queue->async.write);
 #endif
-    pthread_mutex_destroy(&queue->mutex);
+    h2o_mutex_destroy(&queue->mutex);
 }
 
 void h2o_multithread_register_receiver(h2o_multithread_queue_t *queue, h2o_multithread_receiver_t *receiver,
@@ -155,14 +159,14 @@ void h2o_multithread_send_message(h2o_multithread_receiver_t *receiver, h2o_mult
 
     assert(!h2o_linklist_is_linked(&message->link));
 
-    pthread_mutex_lock(&receiver->queue->mutex);
+    h2o_mutex_lock(&receiver->queue->mutex);
     if (h2o_linklist_is_empty(&receiver->_messages)) {
         h2o_linklist_unlink(&receiver->_link);
         h2o_linklist_insert(&receiver->queue->receivers.active, &receiver->_link);
         do_send = 1;
     }
     h2o_linklist_insert(&receiver->_messages, &message->link);
-    pthread_mutex_unlock(&receiver->queue->mutex);
+    h2o_mutex_unlock(&receiver->queue->mutex);
 
     if (do_send) {
 #if H2O_USE_LIBUV
@@ -174,10 +178,21 @@ void h2o_multithread_send_message(h2o_multithread_receiver_t *receiver, h2o_mult
     }
 }
 
-void h2o_multithread_create_thread(pthread_t *tid, const pthread_attr_t *attr, void *(*func)(void *), void *arg)
+void h2o_multithread_create_thread(h2o_thread_t *tid, void (*func)(void *), void *arg)
 {
+#ifdef H2O_USE_LIBUV
+    if (uv_thread_create(tid, func, arg) != 0) {
+        /* libuv doesn't seem to have a cleanly defined error value here.
+         * in the case of pthread_create it may return a UV_* error or
+         * or a generic -1 in case errno should be checked
+         */
+        perror("uv_thread_create");
+        abort();
+    }
+#else
     if (pthread_create(tid, attr, func, arg) != 0) {
         perror("pthread_create");
         abort();
     }
+#endif
 }

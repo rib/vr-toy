@@ -19,9 +19,11 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-#include <sys/socket.h>
 #include <sys/types.h>
+#ifdef __unix__
+#include <sys/socket.h>
 #include <sys/un.h>
+#endif
 #include "h2o/memory.h"
 #include "h2o/string_.h"
 #include "h2o/url.h"
@@ -394,6 +396,7 @@ void h2o_url_copy(h2o_mem_pool_t *pool, h2o_url_t *dest, const h2o_url_t *src)
     dest->_port = src->_port;
 }
 
+#ifdef __unix__
 const char *h2o_url_host_to_sun(h2o_iovec_t host, struct sockaddr_un *sa)
 {
 #define PREFIX "unix:"
@@ -411,5 +414,6 @@ const char *h2o_url_host_to_sun(h2o_iovec_t host, struct sockaddr_un *sa)
 
 #undef PREFIX
 }
+#endif
 
 const char *h2o_url_host_to_sun_err_is_not_unix_socket = "supplied name does not look like an unix-domain socket";

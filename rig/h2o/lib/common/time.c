@@ -19,6 +19,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
+
+
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -140,7 +142,11 @@ static int calc_gmt_offset(time_t t, struct tm *local)
     struct tm gmt;
     int delta;
 
+#ifdef _WIN32
+    gmtime_s(&gmt, &t);
+#else
     gmtime_r(&t, &gmt);
+#endif
     delta = (local->tm_hour - gmt.tm_hour) * 60 + (local->tm_min - gmt.tm_min);
 
     if (local->tm_yday != gmt.tm_yday) {

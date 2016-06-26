@@ -21,13 +21,23 @@
  */
 #include <errno.h>
 #include <fcntl.h>
-#include <netdb.h>
+//#include <netdb.h>
 #include <netinet/in.h>
-#include <spawn.h>
+//#include <spawn.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/socket.h>
+//#include <sys/socket.h>
 #include <sys/types.h>
+#ifdef _WIN32
+#include <io.h>
+#define O_CLOEXEC 0
+#define FD_CLOEXEC 0
+#define O_CREAT _O_CREAT
+#define O_WRONLY _O_WRONLY
+#define O_APPEND _O_APPEND
+#include <malloc.h>
+#define alloca _alloca
+#endif
 #include "h2o.h"
 #include "h2o/serverutil.h"
 
@@ -399,6 +409,11 @@ int h2o_access_log_open_log(const char *path)
     int fd;
 
     if (path[0] == '|') {
+#ifdef _WIN32
+        fprintf(stderr, "piped log open not supported on Windows\n");
+        errno = EINVAL;
+        return -1;
+#else
         int pipefds[2];
         pid_t pid;
         char *argv[4] = {"/bin/sh", "-c", (char *)(path + 1), NULL};
@@ -422,6 +437,7 @@ int h2o_access_log_open_log(const char *path)
         /* close the read side of the pipefds and return the write side */
         close(pipefds[0]);
         fd = pipefds[1];
+#endif
     } else {
         if ((fd = open(path, O_CREAT | O_WRONLY | O_APPEND | O_CLOEXEC, 0644)) == -1) {
             fprintf(stderr, "failed to open log file:%s:%s\n", path, strerror(errno));

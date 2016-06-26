@@ -22,9 +22,17 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#ifdef _WIN32
+#include <Winsock2.h>
+#include <malloc.h>
+#define alloca _alloca
+#include <io.h>
+#define close _close
+#else
 #include <netdb.h>
-#include <string.h>
 #include <sys/un.h>
+#endif
+#include <string.h>
 #include <unistd.h>
 #include <openssl/err.h>
 #include "h2o/socket.h"
@@ -450,12 +458,15 @@ int h2o_socket_compare_address(struct sockaddr *x, struct sockaddr *y)
 
     CMP(x->sa_family, y->sa_family);
 
+#ifdef __unix__
     if (x->sa_family == AF_UNIX) {
         struct sockaddr_un *xun = (void *)x, *yun = (void *)y;
         int r = strcmp(xun->sun_path, yun->sun_path);
         if (r != 0)
             return r;
-    } else if (x->sa_family == AF_INET) {
+    } else 
+#endif
+    if (x->sa_family == AF_INET) {
         struct sockaddr_in *xin = (void *)x, *yin = (void *)y;
         CMP(ntohl(xin->sin_addr.s_addr), ntohl(yin->sin_addr.s_addr));
         CMP(ntohs(xin->sin_port), ntohs(yin->sin_port));

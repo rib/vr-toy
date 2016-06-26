@@ -43,16 +43,19 @@
  */
 void h2o_set_signal_handler(int signo, void (*cb)(int signo));
 
+#ifdef __unix__
 /**
  * equiv. to setuidgid of djb
  */
 int h2o_setuidgid(const char *user);
+#endif
 
 /**
  * return a list of fds passed in from Server::Starter, or 0 if Server::Starter was not used.  -1 on error
  */
 size_t h2o_server_starter_get_fds(int **_fds);
 
+#ifdef __unix__
 /**
  * spawns a command with given arguments, while mapping the designated file descriptors.
  * @param cmd file being executed
@@ -62,7 +65,7 @@ size_t h2o_server_starter_get_fds(int **_fds);
  *        pair is not -1.  If the second value is -1, then `close` is called with the first value as the argument.
  * @return pid of the process being spawned if successful, or -1 if otherwise
  */
-pid_t h2o_spawnp(const char *cmd, char *const *argv, const int *mapped_fds, int clocexec_mutex_is_locked);
+int h2o_spawnp(const char *cmd, char *const *argv, const int *mapped_fds, int clocexec_mutex_is_locked);
 
 /**
  * executes a command and returns its output
@@ -72,6 +75,7 @@ pid_t h2o_spawnp(const char *cmd, char *const *argv, const int *mapped_fds, int 
  * @param child_status result of waitpid(child_pid), only available if the function returns zero
  */
 int h2o_read_command(const char *cmd, char **argv, h2o_buffer_t **resp, int *child_status);
+#endif
 
 /**
  * Gets the number of processor cores

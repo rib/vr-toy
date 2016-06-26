@@ -22,6 +22,10 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef _WIN32
+#include <malloc.h>
+#define alloca _alloca
+#endif
 #include "khash.h"
 #include "h2o.h"
 

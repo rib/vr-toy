@@ -22,12 +22,16 @@
 #ifndef h2o__hostinfo_h
 #define h2o__hostinfo_h
 
+#ifdef _WIN32
+#include <Winsock2.h>
+#else
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <sys/socket.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
 #include <sys/types.h>
 #include "h2o/multithread.h"
 

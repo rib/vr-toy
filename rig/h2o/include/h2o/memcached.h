@@ -22,7 +22,6 @@
 #ifndef h2o__memcached_h
 #define h2o__memcached_h
 
-#include <pthread.h>
 #include "h2o/memory.h"
 #include "h2o/multithread.h"
 

@@ -55,7 +55,7 @@ static struct {
         } vars;
     } cache;
     struct {
-        void *(*update_thread)(void *conf);
+        void (*update_thread)(void *conf);
         union {
             struct st_session_ticket_generating_updater_conf_t generating;
             struct {
@@ -72,7 +72,7 @@ static struct {
     } memcached;
 } conf;
 
-H2O_NORETURN static void *cache_cleanup_thread(void *_contexts)
+H2O_NORETURN static void cache_cleanup_thread(void *_contexts)
 {
     SSL_CTX **contexts = _contexts;
 
@@ -92,11 +92,8 @@ static void spawn_cache_cleanup_thread(SSL_CTX **_contexts, size_t num_contexts)
     contexts[num_contexts] = NULL;
 
     /* launch the thread */
-    pthread_t tid;
-    pthread_attr_t attr;
-    pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, 1);
-    h2o_multithread_create_thread(&tid, &attr, cache_cleanup_thread, contexts);
+    h2o_pthread_t tid;
+    h2o_multithread_create_thread(&tid, cache_cleanup_thread, contexts);
 }
 
 static void setup_cache_disable(SSL_CTX **contexts, size_t num_contexts)
@@ -300,7 +297,7 @@ static int update_tickets(session_ticket_vector_t *tickets, uint64_t now)
     return altered;
 }
 
-H2O_NORETURN static void *ticket_internal_updater(void *unused)
+H2O_NORETURN static void ticket_internal_updater(void *unused)
 {
     while (1) {
         pthread_rwlock_wrlock(&session_tickets.rwlock);
@@ -843,11 +840,8 @@ void ssl_setup_session_resumption(SSL_CTX **contexts, size_t num_contexts)
 
     if (conf.ticket.update_thread != NULL) {
         /* start session ticket updater thread */
-        pthread_t tid;
-        pthread_attr_t attr;
-        pthread_attr_init(&attr);
-        pthread_attr_setdetachstate(&attr, 1);
-        h2o_multithread_create_thread(&tid, &attr, conf.ticket.update_thread, NULL);
+        h2o_pthread_t tid;
+        h2o_multithread_create_thread(&tid, conf.ticket.update_thread, NULL);
         size_t i;
         for (i = 0; i != num_contexts; ++i)
             SSL_CTX_set_tlsext_ticket_key_cb(contexts[i], ticket_key_callback);

@@ -21,6 +21,10 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef _WIN32
+#include <malloc.h>
+#define alloca _alloca
+#endif
 #include "h2o.h"
 
 #define INITIAL_INBUFSZ 8192

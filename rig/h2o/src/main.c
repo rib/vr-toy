@@ -214,7 +214,7 @@ static int on_sni_callback(SSL *ssl, int *ad, void *arg)
     return SSL_TLSEXT_ERR_OK;
 }
 
-#ifndef OPENSSL_NO_OCSP
+#if !defined(OPENSSL_NO_OCSP) && !defined(_WIN32)
 
 static void update_ocsp_stapling(struct listener_ssl_config_t *ssl_conf, h2o_buffer_t *resp)
 {
@@ -581,6 +581,9 @@ static int listener_setup_ssl(h2o_configurator_command_t *cmd, h2o_configurator_
 #ifdef OPENSSL_NO_OCSP
         if (ocsp_update_interval != 0)
             fprintf(stderr, "[OCSP Stapling] disabled (not support by the SSL library)\n");
+#elif defined(_WIN32)
+        ocsp_update_interval = 0;
+        fprintf(stderr, "[OCSP Stapling] disabled (not support on Windows currently)\n");
 #else
         SSL_CTX_set_tlsext_status_cb(ssl_ctx, on_ocsp_stapling_callback);
         SSL_CTX_set_tlsext_status_arg(ssl_ctx, ssl_config);
@@ -1214,7 +1217,7 @@ static void on_server_notification(h2o_multithread_receiver_t *receiver, h2o_lin
     }
 }
 
-H2O_NORETURN static void *run_loop(void *_thread_index)
+H2O_NORETURN static void run_loop(void *_thread_index)
 {
     size_t thread_index = (size_t)_thread_index;
     struct listener_ctx_t *listeners = alloca(sizeof(*listeners) * conf.num_listeners);
@@ -1668,7 +1671,7 @@ int main(int argc, char **argv)
     size_t i;
     for (i = 1; i != conf.num_threads; ++i) {
         pthread_t tid;
-        h2o_multithread_create_thread(&tid, NULL, run_loop, (void *)i);
+        h2o_multithread_create_thread(&tid, run_loop, (void *)i);
     }
 
     /* this thread becomes the first thread */

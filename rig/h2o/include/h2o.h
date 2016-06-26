@@ -31,11 +31,17 @@ extern "C" {
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
-#include <sys/time.h>
-#include <sys/socket.h>
 #include <time.h>
+
+#ifdef _WIN32
+#include <Winsock2.h>
+#else
 #include <unistd.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#endif
 #include <openssl/ssl.h>
+
 #include "h2o/hostinfo.h"
 #include "h2o/memcached.h"
 #include "h2o/linklist.h"
@@ -143,6 +149,8 @@ typedef struct st_h2o_timestamp_string_t {
 /**
  * a timestamp.
  * Applications should call h2o_get_timestamp to obtain a timestamp.
+ *
+ * Note: the timestamp only has a resolution in seconds.
  */
 typedef struct st_h2o_timestamp_t {
     struct timeval at;
@@ -435,7 +443,7 @@ struct st_h2o_context_t {
 
     struct {
         uint64_t uv_now_at;
-        struct timeval tv_at;
+        time_t epoch_sec_at;
         h2o_timestamp_string_t *value;
     } _timestamp_cache;
 

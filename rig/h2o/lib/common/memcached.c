@@ -26,10 +26,11 @@
 #include "h2o/linklist.h"
 #include "h2o/memcached.h"
 #include "h2o/string_.h"
+#include <uv.h>
 
 struct st_h2o_memcached_context_t {
-    pthread_mutex_t mutex;
-    pthread_cond_t cond;
+    h2o_mutex_t mutex;
+    h2o_cond_t cond;
     h2o_linklist_t pending;
     size_t num_threads_connected;
     char *host;
@@ -40,7 +41,7 @@ struct st_h2o_memcached_context_t {
 struct st_h2o_memcached_conn_t {
     h2o_memcached_context_t *ctx;
     yrmcds yrmcds;
-    pthread_mutex_t mutex;
+    h2o_mutex_t mutex;
     h2o_linklist_t inflight;
     int writer_exit_requested;
 };
@@ -132,7 +133,7 @@ static h2o_memcached_req_t *pop_inflight(struct st_h2o_memcached_conn_t *conn, u
     h2o_memcached_req_t *req;
     h2o_linklist_t *node;
 
-    pthread_mutex_lock(&conn->mutex);
+    h2o_mutex_lock(&conn->mutex);
 
     for (node = conn->inflight.next; node != &conn->inflight; node = node->next) {
         req = H2O_STRUCT_FROM_MEMBER(h2o_memcached_req_t, inflight, node);
@@ -145,7 +146,7 @@ static h2o_memcached_req_t *pop_inflight(struct st_h2o_memcached_conn_t *conn, u
     req = NULL;
 Found:
 
-    pthread_mutex_unlock(&conn->mutex);
+    h2o_mutex_unlock(&conn->mutex);
 
     return req;
 }
@@ -155,19 +156,19 @@ static void *writer_main(void *_conn)
     struct st_h2o_memcached_conn_t *conn = _conn;
     yrmcds_error err;
 
-    pthread_mutex_lock(&conn->ctx->mutex);
+    h2o_mutex_lock(&conn->ctx->mutex);
 
     while (!__sync_add_and_fetch(&conn->writer_exit_requested, 0)) {
         while (!h2o_linklist_is_empty(&conn->ctx->pending)) {
             h2o_memcached_req_t *req = H2O_STRUCT_FROM_MEMBER(h2o_memcached_req_t, pending, conn->ctx->pending.next);
             h2o_linklist_unlink(&req->pending);
-            pthread_mutex_unlock(&conn->ctx->mutex);
+            h2o_mutex_unlock(&conn->ctx->mutex);
 
             switch (req->type) {
             case REQ_TYPE_GET:
-                pthread_mutex_lock(&conn->mutex);
+                h2o_mutex_lock(&conn->mutex);
                 h2o_linklist_insert(&conn->inflight, &req->inflight);
-                pthread_mutex_unlock(&conn->mutex);
+                h2o_mutex_unlock(&conn->mutex);
                 if ((err = yrmcds_get(&conn->yrmcds, req->key.base, req->key.len, 0, &req->data.get.serial)) != YRMCDS_OK)
                     goto Error;
                 break;
@@ -186,20 +187,18 @@ static void *writer_main(void *_conn)
                 goto Error;
             }
 
-            pthread_mutex_lock(&conn->ctx->mutex);
+            h2o_mutex_lock(&conn->ctx->mutex);
         }
-        pthread_cond_wait(&conn->ctx->cond, &conn->ctx->mutex);
+        h2o_cond_wait(&conn->ctx->cond, &conn->ctx->mutex);
     }
 
-    pthread_mutex_unlock(&conn->ctx->mutex);
-    return NULL;
+    h2o_mutex_unlock(&conn->ctx->mutex);
+    return;
 
 Error:
     fprintf(stderr, "[lib/common/memcached.c] failed to send request; %s\n", yrmcds_strerror(err));
     /* doc says the call can be used to interrupt yrmcds_recv */
     yrmcds_shutdown(&conn->yrmcds);
-
-    return NULL;
 }
 
 static void connect_to_server(h2o_memcached_context_t *ctx, yrmcds *yrmcds)
@@ -222,17 +221,17 @@ static void connect_to_server(h2o_memcached_context_t *ctx, yrmcds *yrmcds)
 static void reader_main(h2o_memcached_context_t *ctx)
 {
     struct st_h2o_memcached_conn_t conn = {ctx, {}, PTHREAD_MUTEX_INITIALIZER, {&conn.inflight, &conn.inflight}, 0};
-    pthread_t writer_thread;
+    h2o_thread_t writer_thread;
     yrmcds_response resp;
     yrmcds_error err;
 
     /* connect to server and start the writer thread */
     connect_to_server(conn.ctx, &conn.yrmcds);
-    pthread_create(&writer_thread, NULL, writer_main, &conn);
+    h2o_multithread_create_thread(&writer_thread, writer_main, &conn);
 
-    pthread_mutex_lock(&conn.ctx->mutex);
+    h2o_mutex_lock(&conn.ctx->mutex);
     ++conn.ctx->num_threads_connected;
-    pthread_mutex_unlock(&conn.ctx->mutex);
+    h2o_mutex_unlock(&conn.ctx->mutex);
 
     /* receive data until an error occurs */
     while (1) {
@@ -254,24 +253,24 @@ static void reader_main(h2o_memcached_context_t *ctx)
     }
 
     /* send error to all the reqs in-flight */
-    pthread_mutex_lock(&conn.mutex);
+    h2o_mutex_lock(&conn.mutex);
     while (!h2o_linklist_is_empty(&conn.inflight)) {
         h2o_memcached_req_t *req = H2O_STRUCT_FROM_MEMBER(h2o_memcached_req_t, inflight, conn.inflight.next);
         h2o_linklist_unlink(&req->inflight);
         assert(req->type == REQ_TYPE_GET);
         h2o_multithread_send_message(req->data.get.receiver, &req->data.get.message);
     }
-    pthread_mutex_unlock(&conn.mutex);
+    h2o_mutex_unlock(&conn.mutex);
 
     /* stop the writer thread */
     __sync_add_and_fetch(&conn.writer_exit_requested, 1);
-    pthread_mutex_lock(&conn.ctx->mutex);
-    pthread_cond_broadcast(&conn.ctx->cond);
-    pthread_mutex_unlock(&conn.ctx->mutex);
-    pthread_join(writer_thread, NULL);
+    h2o_mutex_lock(&conn.ctx->mutex);
+    h2o_cond_broadcast(&conn.ctx->cond);
+    h2o_mutex_unlock(&conn.ctx->mutex);
+    h2o_thread_join(writer_thread);
 
     /* decrement num_threads_connected, and discard all the pending requests if no connections are alive */
-    pthread_mutex_lock(&conn.ctx->mutex);
+    h2o_mutex_lock(&conn.ctx->mutex);
     if (--conn.ctx->num_threads_connected == 0) {
         while (!h2o_linklist_is_empty(&conn.ctx->pending)) {
             h2o_memcached_req_t *req = H2O_STRUCT_FROM_MEMBER(h2o_memcached_req_t, pending, conn.ctx->pending.next);
@@ -279,7 +278,7 @@ static void reader_main(h2o_memcached_context_t *ctx)
             discard_req(req);
         }
     }
-    pthread_mutex_unlock(&conn.ctx->mutex);
+    h2o_mutex_unlock(&conn.ctx->mutex);
 
     /* close the connection */
     yrmcds_close(&conn.yrmcds);
@@ -291,21 +290,20 @@ static void *thread_main(void *_ctx)
 
     while (1)
         reader_main(ctx);
-    return NULL;
 }
 
 static void dispatch(h2o_memcached_context_t *ctx, h2o_memcached_req_t *req)
 {
-    pthread_mutex_lock(&ctx->mutex);
+    h2o_mutex_lock(&ctx->mutex);
 
     if (ctx->num_threads_connected != 0) {
         h2o_linklist_insert(&ctx->pending, &req->pending);
-        pthread_cond_signal(&ctx->cond);
+        h2o_cond_signal(&ctx->cond);
     } else {
         discard_req(req);
     }
 
-    pthread_mutex_unlock(&ctx->mutex);
+    h2o_mutex_unlock(&ctx->mutex);
 }
 
 void h2o_memcached_receiver(h2o_multithread_receiver_t *receiver, h2o_linklist_t *messages)
@@ -343,13 +341,13 @@ void h2o_memcached_cancel_get(h2o_memcached_context_t *ctx, h2o_memcached_req_t 
 {
     int do_free = 0;
 
-    pthread_mutex_lock(&ctx->mutex);
+    h2o_mutex_lock(&ctx->mutex);
     req->data.get.cb = NULL;
     if (h2o_linklist_is_linked(&req->pending)) {
         h2o_linklist_unlink(&req->pending);
         do_free = 1;
     }
-    pthread_mutex_unlock(&ctx->mutex);
+    h2o_mutex_unlock(&ctx->mutex);
 
     if (do_free)
         free_req(req);
@@ -379,8 +377,8 @@ h2o_memcached_context_t *h2o_memcached_create_context(const char *host, uint16_t
 {
     h2o_memcached_context_t *ctx = h2o_mem_alloc(sizeof(*ctx));
 
-    pthread_mutex_init(&ctx->mutex, NULL);
-    pthread_cond_init(&ctx->cond, NULL);
+    h2o_mutex_init(&ctx->mutex, NULL);
+    h2o_cond_init(&ctx->cond, NULL);
     h2o_linklist_init_anchor(&ctx->pending);
     ctx->num_threads_connected = 0;
     ctx->host = h2o_strdup(NULL, host, SIZE_MAX).base;
@@ -388,14 +386,10 @@ h2o_memcached_context_t *h2o_memcached_create_context(const char *host, uint16_t
     ctx->prefix = h2o_strdup(NULL, prefix, SIZE_MAX);
 
     { /* start the threads */
-        pthread_t tid;
-        pthread_attr_t attr;
+        h2o_thread_t tid;
         size_t i;
-        pthread_attr_init(&attr);
-        pthread_attr_setdetachstate(&attr, 1);
         for (i = 0; i != num_threads; ++i)
             h2o_multithread_create_thread(&tid, &attr, thread_main, ctx);
-        pthread_attr_destroy(&attr);
     }
 
     return ctx;

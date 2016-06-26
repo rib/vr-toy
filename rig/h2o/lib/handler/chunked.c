@@ -22,6 +22,10 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef _WIN32
+#include <malloc.h>
+#define alloca _alloca
+#endif
 #include "h2o.h"
 
 typedef struct st_chunked_encoder_t {

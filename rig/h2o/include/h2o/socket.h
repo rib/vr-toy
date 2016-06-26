@@ -27,7 +27,11 @@ extern "C" {
 #endif
 
 #include <stdint.h>
+#ifdef _WIN32
+#include <Winsock2.h>
+#else
 #include <sys/socket.h>
+#endif
 #include <openssl/ssl.h>
 #include "h2o/memory.h"
 
@@ -178,6 +182,7 @@ size_t h2o_socket_getnumerichost(struct sockaddr *sa, socklen_t salen, char *buf
  * returns the port number, or -1 if failed
  */
 int32_t h2o_socket_getport(struct sockaddr *sa);
+
 /**
  * performs SSL handshake on a socket
  * @param sock the socket

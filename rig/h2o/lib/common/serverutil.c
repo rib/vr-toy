@@ -21,20 +21,21 @@
  */
 #include <errno.h>
 #include <fcntl.h>
+#ifdef __unix__
 #include <grp.h>
-#include <pthread.h>
 #include <pwd.h>
-#include <signal.h>
 #include <spawn.h>
+#include <sys/wait.h>
+#if !defined(_SC_NPROCESSORS_ONLN)
+#include <sys/sysctl.h>
+#endif
+#endif
+#include <signal.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#include <sys/wait.h>
 #include <unistd.h>
-#if !defined(_SC_NPROCESSORS_ONLN)
-#include <sys/sysctl.h>
-#endif
 #include "cloexec.h"
 #include "h2o/memory.h"
 #include "h2o/serverutil.h"
@@ -43,14 +44,19 @@
 
 void h2o_set_signal_handler(int signo, void (*cb)(int signo))
 {
+#ifdef _WIN32
+    signal(signo, cb);
+#else
     struct sigaction action;
 
     memset(&action, 0, sizeof(action));
     sigemptyset(&action.sa_mask);
     action.sa_handler = cb;
     sigaction(signo, &action, NULL);
+#endif
 }
 
+#ifdef __unix__
 int h2o_setuidgid(const char *user)
 {
     struct passwd pwbuf, *pw;
@@ -80,6 +86,7 @@ int h2o_setuidgid(const char *user)
 
     return 0;
 }
+#endif
 
 size_t h2o_server_starter_get_fds(int **_fds)
 {
@@ -114,6 +121,7 @@ size_t h2o_server_starter_get_fds(int **_fds)
     return fds.size;
 }
 
+#ifdef __unix__
 pid_t h2o_spawnp(const char *cmd, char *const *argv, const int *mapped_fds, int cloexec_mutex_is_locked)
 {
 #if defined(__linux__)
@@ -130,7 +138,7 @@ pid_t h2o_spawnp(const char *cmd, char *const *argv, const int *mapped_fds, int 
 
     /* fork */
     if (!cloexec_mutex_is_locked)
-        pthread_mutex_lock(&cloexec_mutex);
+        h2o_mutex_lock(&cloexec_mutex);
     if ((pid = fork()) == 0) {
         /* in child process, map the file descriptors and execute; return the errnum through pipe if exec failed */
         if (mapped_fds != NULL) {
@@ -146,7 +154,7 @@ pid_t h2o_spawnp(const char *cmd, char *const *argv, const int *mapped_fds, int 
         _exit(EX_SOFTWARE);
     }
     if (!cloexec_mutex_is_locked)
-        pthread_mutex_unlock(&cloexec_mutex);
+        h2o_mutex_unlock(&cloexec_mutex);
     if (pid == -1)
         goto Error;
 
@@ -193,10 +201,10 @@ Error:
         }
     }
     if (!cloexec_mutex_is_locked)
-        pthread_mutex_lock(&cloexec_mutex);
+        h2o_mutex_lock(&cloexec_mutex);
     errno = posix_spawnp(&pid, cmd, &file_actions, NULL, argv, environ);
     if (!cloexec_mutex_is_locked)
-        pthread_mutex_unlock(&cloexec_mutex);
+        h2o_mutex_unlock(&cloexec_mutex);
     if (errno != 0)
         return -1;
 
@@ -213,7 +221,7 @@ int h2o_read_command(const char *cmd, char **argv, h2o_buffer_t **resp, int *chi
 
     h2o_buffer_init(resp, &h2o_socket_buffer_prototype);
 
-    pthread_mutex_lock(&cloexec_mutex);
+    h2o_mutex_lock(&cloexec_mutex);
     mutex_locked = 1;
 
     /* create pipe for reading the result */
@@ -229,7 +237,7 @@ int h2o_read_command(const char *cmd, char **argv, h2o_buffer_t **resp, int *chi
     close(respfds[1]);
     respfds[1] = -1;
 
-    pthread_mutex_unlock(&cloexec_mutex);
+    h2o_mutex_unlock(&cloexec_mutex);
     mutex_locked = 0;
 
     /* read the response from pipe */
@@ -245,7 +253,7 @@ int h2o_read_command(const char *cmd, char **argv, h2o_buffer_t **resp, int *chi
 
 Exit:
     if (mutex_locked)
-        pthread_mutex_unlock(&cloexec_mutex);
+        h2o_mutex_unlock(&cloexec_mutex);
     if (pid != -1) {
         /* wait for the child to complete */
         pid_t r;
@@ -265,6 +273,7 @@ Exit:
 
     return ret;
 }
+#endif /* __unix__ */
 
 size_t h2o_numproc()
 {

@@ -22,6 +22,14 @@
 #ifndef CLOEXEC_H
 #define CLOEXEC_H
 
+#ifdef _WIN32
+
+#include <Winsock2.h>
+#define cloexec_accept accept
+#define cloexec_socket socket
+
+#else
+
 #include <pthread.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -34,3 +42,5 @@ int cloexec_pipe(int fds[2]);
 int cloexec_socket(int domain, int type, int protocol);
 
 #endif
+
+#endif /* CLOEXEC_H */

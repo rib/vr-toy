@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#define _USE_MATH_DEFINES /* For constants on Windows */
 #include <math.h>
 #include "kmath.h"
 

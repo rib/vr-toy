@@ -27,7 +27,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef __unix__
 #include <sys/mman.h>
+#endif
 #include <unistd.h>
 #include "h2o/memory.h"
 
@@ -176,21 +178,28 @@ void h2o_mem_link_shared(h2o_mem_pool_t *pool, void *p)
     link_shared(pool, H2O_STRUCT_FROM_MEMBER(struct st_h2o_mem_pool_shared_entry_t, bytes, p));
 }
 
+#ifdef __unix__
 static size_t topagesize(size_t capacity)
 {
     size_t pagesize = getpagesize();
+
     return (offsetof(h2o_buffer_t, _buf) + capacity + pagesize - 1) / pagesize * pagesize;
 }
+#endif
 
 void h2o_buffer__do_free(h2o_buffer_t *buffer)
 {
     /* caller should assert that the buffer is not part of the prototype */
     if (buffer->capacity == buffer->_prototype->_initial_buf.capacity) {
         h2o_mem_free_recycle(&buffer->_prototype->allocator, buffer);
-    } else if (buffer->_fd != -1) {
+    } else 
+#ifdef __unix__
+    if (buffer->_fd != -1) {
         close(buffer->_fd);
         munmap((void *)buffer, topagesize(buffer->capacity));
-    } else {
+    } else
+#endif
+    {
         free(buffer);
     }
 }
@@ -226,6 +235,7 @@ h2o_iovec_t h2o_buffer_reserve(h2o_buffer_t **_inbuf, size_t min_guarantee)
             do {
                 new_capacity *= 2;
             } while (new_capacity - inbuf->size < min_guarantee);
+#ifdef __unix__
             if (inbuf->_prototype->mmap_settings != NULL && inbuf->_prototype->mmap_settings->threshold <= new_capacity) {
                 size_t new_allocsize = topagesize(new_capacity);
                 int fd;
@@ -267,7 +277,9 @@ h2o_iovec_t h2o_buffer_reserve(h2o_buffer_t **_inbuf, size_t min_guarantee)
                     inbuf->capacity = new_capacity;
                     inbuf->bytes = newp->_buf + offset;
                 }
-            } else {
+            } else 
+#endif /* __unix__ */
+            {
                 h2o_buffer_t *newp = h2o_mem_alloc(offsetof(h2o_buffer_t, _buf) + new_capacity);
                 newp->size = inbuf->size;
                 newp->bytes = newp->_buf;
@@ -286,10 +298,12 @@ h2o_iovec_t h2o_buffer_reserve(h2o_buffer_t **_inbuf, size_t min_guarantee)
 
     return ret;
 
+#ifdef __unix__
 MapError:
     ret.base = NULL;
     ret.len = 0;
     return ret;
+#endif
 }
 
 void h2o_buffer_consume(h2o_buffer_t **_inbuf, size_t delta)

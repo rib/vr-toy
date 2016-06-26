@@ -28,7 +28,6 @@ extern "C" {
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <pthread.h>
 #include "h2o/linklist.h"
 #include "h2o/multithread.h"
 #include "h2o/socket.h"
@@ -61,7 +60,7 @@ typedef struct st_h2o_socketpool_t {
     /* vars that are modified by multiple threads */
     struct {
         size_t count; /* synchronous operations should be used to access the variable */
-        pthread_mutex_t mutex;
+        h2o_mutex_t mutex;
         h2o_linklist_t sockets; /* guarded by the mutex; list of struct pool_entry_t defined in socket/pool.c */
     } _shared;
 } h2o_socketpool_t;

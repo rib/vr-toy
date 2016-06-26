@@ -21,7 +21,7 @@
  */
 #include <stddef.h>
 #include <stdlib.h>
-#include <sys/time.h>
+//#include <sys/time.h>
 #include "h2o.h"
 #include "h2o/memcached.h"
 
@@ -107,8 +107,6 @@ void h2o_context_init(h2o_context_t *ctx, h2o_loop_t *loop, h2o_globalconf_t *co
     ctx->_module_configs = h2o_mem_alloc(sizeof(*ctx->_module_configs) * config->_num_config_slots);
     memset(ctx->_module_configs, 0, sizeof(*ctx->_module_configs) * config->_num_config_slots);
 
-    static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-    pthread_mutex_lock(&mutex);
     for (i = 0; config->hosts[i] != NULL; ++i) {
         h2o_hostconf_t *hostconf = config->hosts[i];
         for (j = 0; j != hostconf->paths.size; ++j) {
@@ -117,7 +115,6 @@ void h2o_context_init(h2o_context_t *ctx, h2o_loop_t *loop, h2o_globalconf_t *co
         }
         h2o_context_init_pathconf_context(ctx, &hostconf->fallback_path);
     }
-    pthread_mutex_unlock(&mutex);
 }
 
 void h2o_context_dispose(h2o_context_t *ctx)
@@ -162,27 +159,45 @@ void h2o_context_request_shutdown(h2o_context_t *ctx)
         ctx->globalconf->http2.callbacks.request_shutdown(ctx);
 }
 
+static time_t get_epoch_seconds(void)
+{
+#ifdef _WIN32
+    time_t ret;
+    time(&ret);
+    return ret;
+#else
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return tv.tv_sec;
+#endif
+}
+
 void h2o_get_timestamp(h2o_context_t *ctx, h2o_mem_pool_t *pool, h2o_timestamp_t *ts)
 {
     uint64_t now = h2o_now(ctx->loop);
     struct tm gmt;
 
     if (ctx->_timestamp_cache.uv_now_at != now) {
-        time_t prev_sec = ctx->_timestamp_cache.tv_at.tv_sec;
+        time_t prev_sec = ctx->_timestamp_cache.epoch_sec_at;
         ctx->_timestamp_cache.uv_now_at = now;
-        gettimeofday(&ctx->_timestamp_cache.tv_at, NULL);
-        if (ctx->_timestamp_cache.tv_at.tv_sec != prev_sec) {
+        ctx->_timestamp_cache.epoch_sec_at = get_epoch_seconds();
+        if (ctx->_timestamp_cache.epoch_sec_at != prev_sec) {
             /* update the string cache */
             if (ctx->_timestamp_cache.value != NULL)
                 h2o_mem_release_shared(ctx->_timestamp_cache.value);
             ctx->_timestamp_cache.value = h2o_mem_alloc_shared(NULL, sizeof(h2o_timestamp_string_t), NULL);
-            gmtime_r(&ctx->_timestamp_cache.tv_at.tv_sec, &gmt);
+#ifdef _WIN32
+            gmtime_s(&gmt, &ctx->_timestamp_cache.epoch_sec_at);
+#else
+            gmtime_r(&ctx->_timestamp_cache.epoch_sec_at, &gmt);
+#endif
             h2o_time2str_rfc1123(ctx->_timestamp_cache.value->rfc1123, &gmt);
-            h2o_time2str_log(ctx->_timestamp_cache.value->log, ctx->_timestamp_cache.tv_at.tv_sec);
+            h2o_time2str_log(ctx->_timestamp_cache.value->log, ctx->_timestamp_cache.epoch_sec_at);
         }
     }
 
-    ts->at = ctx->_timestamp_cache.tv_at;
+    ts->at.tv_sec = ctx->_timestamp_cache.epoch_sec_at;
+    ts->at.tv_usec = 0;
     h2o_mem_link_shared(pool, ctx->_timestamp_cache.value);
     ts->str = ctx->_timestamp_cache.value;
 }

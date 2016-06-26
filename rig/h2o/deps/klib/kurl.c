@@ -4,9 +4,9 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include <string.h>
-#include <curl/curl.h>
+//#include <curl/curl.h>
 #include "kurl.h"
 
 /**********************

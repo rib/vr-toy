@@ -22,6 +22,13 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#ifdef _WIN32
+#define strcasecmp _stricmp
+#define strncasecmp _strnicmp
+#include <malloc.h>
+#define alloca _alloca
+#endif
 #include "h2o.h"
 #include "h2o/configurator.h"
 

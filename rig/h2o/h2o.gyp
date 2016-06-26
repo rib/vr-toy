@@ -29,42 +29,41 @@
       'sources': [
         'deps/klib/kgraph.h',
         'deps/klib/kvec.h',
-        'deps/klib/kurl.c',
+        #'deps/klib/kurl.c',
         'deps/klib/ksa.c',
         'deps/klib/klist.h',
         'deps/klib/kmath.c',
         'deps/klib/kstring.h',
         'deps/klib/kson.h',
-        'deps/klib/kthread.c',
+        #'deps/klib/kthread.c',
         'deps/klib/kseq.h',
-        'deps/klib/kurl.h',
-        'deps/klib/knetfile.c',
+        #'deps/klib/kurl.h',
+        #'deps/klib/knetfile.c',
         'deps/klib/kbit.h',
         'deps/klib/kstring.c',
         'deps/klib/khmm.h',
         'deps/klib/khmm.c',
-        'deps/klib/bgzf.h',
+        #'deps/klib/bgzf.h',
         'deps/klib/knhx.h',
         'deps/klib/ksort.h',
         'deps/klib/kson.c',
         'deps/klib/ksw.h',
         'deps/klib/ksw.c',
-        'deps/klib/knetfile.h',
-        'deps/klib/bgzf.c',
+        #'deps/klib/knetfile.h',
+        #'deps/klib/bgzf.c',
         'deps/klib/kmath.h',
         'deps/klib/khash.h',
-        'deps/klib/kopen.c',
+        #'deps/klib/kopen.c',
         'deps/klib/kbtree.h',
         'deps/klib/knhx.c',
 
         'deps/picohttpparser/picohttpparser.c',
         'deps/picohttpparser/picohttpparser.h',
 
-        'deps/picotest/picotest.c',
-        'deps/picotest/picotest.h',
+#        'deps/picotest/picotest.c',
+#        'deps/picotest/picotest.h',
 
         'deps/cloexec/cloexec.h',
-        'deps/cloexec/cloexec.c',
 
         'deps/yoml/yoml-parser.h',
         'deps/yoml/yoml.h',
@@ -130,6 +129,9 @@
             '_ALL_SOURCE=1',
             '_GNU_SOURCE=1',
           ],
+          'sources': [
+            'deps/cloexec/cloexec.c',
+          ],
           'link_settings': {
             'libraries': [ '-lm' ],
             'conditions': [
@@ -143,6 +145,10 @@
               'cflags': [ '-fPIC' ],
             }],
           ],
+        },{
+          'include_dirs': [
+            'win'
+          ]
         }],
         [ 'enable_uv==1 and is_nodejs_build!=1', {
           'dependencies': [

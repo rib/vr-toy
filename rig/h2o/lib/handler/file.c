@@ -31,6 +31,15 @@
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
+#ifdef _WIN32
+#include <io.h>
+#define open _open
+#define read _read
+#define lseek _lseek
+#define close _close
+#define O_CLOEXEC 0
+#define O_RDONLY _O_RDONLY
+#endif
 
 #include "h2o.h"
 
@@ -254,7 +263,11 @@ Opened:
     self->ranged.range_count = 0;
     self->ranged.range_infos = NULL;
 
+#ifdef _WIN32
+    gmtime_s(&last_modified_gmt, &st.st_mtime);
+#else
     gmtime_r(&st.st_mtime, &last_modified_gmt);
+#endif
     self->last_modified.packed = time2packed(&last_modified_gmt);
     h2o_time2str_rfc1123(self->last_modified.buf, &last_modified_gmt);
     if ((flags & H2O_FILE_FLAG_NO_ETAG) != 0) {

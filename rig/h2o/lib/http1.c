@@ -23,6 +23,10 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef _WIN32
+#include <malloc.h>
+#define alloca _alloca
+#endif
 #include "picohttpparser.h"
 #include "h2o.h"
 #include "h2o/http1.h"
