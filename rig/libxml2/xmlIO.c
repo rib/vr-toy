@@ -41,6 +41,11 @@
 
 #if defined(WIN32) || defined(_WIN32)
 #include <windows.h>
+#include <io.h>
+#include <direct.h>
+#define read _read
+#define close _close
+#define getcwd _getcwd
 #endif
 
 #if defined(_WIN32_WCE)

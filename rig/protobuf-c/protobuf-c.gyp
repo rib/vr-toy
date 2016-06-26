@@ -91,8 +91,14 @@
 	'protoc-c/main.cc',
       ],
       'libraries': [
-        '-lstdc++',
-        '-lz'
+      ],
+      'conditions': [
+        ['OS!="win"', {
+          'libraries': [
+            '-lstdc++',
+            '-lz'
+          ]
+        }],
       ],
     }
   ]

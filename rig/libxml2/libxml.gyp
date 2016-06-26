@@ -144,8 +144,8 @@
 	'include',
       ],
       'dependencies': [
-	'../icu/source/icu.gyp:icuuc',
-	'../zlib/zlib.gyp:zlib',
+        #'../icu/source/icu.gyp:icuuc',
+	#'../zlib/zlib.gyp:zlib',
       ],
       'direct_dependent_settings': {
 	'defines': [
@@ -168,6 +168,22 @@
 	['OS=="mac" or OS=="android"', {'defines': ['_REENTRANT']}],
 	['OS=="win"', {
 	  'product_name': 'libxml2',
+          'defines': [
+            'HAVE_CTYPE_H',
+            'HAVE_STDARG_H',
+            'HAVE_MALLOC_H',
+            'HAVE_ERRNO_H',
+            'HAVE_STDINT_H',
+            'HAVE_SYS_STAT_H',
+            'HAVE__STAT',
+            'HAVE_STAT',
+            'HAVE_STDLIB_H',
+            'HAVE_TIME_H',
+            'HAVE_FCNTL_H',
+            'ICONV_CONST=const',
+            'HAVE_ISINF',
+            'HAVE_ISNAN',
+          ]
 	}, {  # else: OS!="win"
 	  'product_name': 'xml2',
 	}],

@@ -63,6 +63,7 @@
 #ifndef GOOGLE_PROTOBUF_COMPILER_C_EXTENSION_H__
 #define GOOGLE_PROTOBUF_COMPILER_C_EXTENSION_H__
 
+#include <stdint.h>
 #include <string>
 #include <google/protobuf/stubs/common.h>
 

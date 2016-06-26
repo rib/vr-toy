@@ -22,20 +22,29 @@
       'target_name': 'freetype',
       'type': 'static_library',
       'dependencies': [
-#        'zlib/zlib.gyp:zlib'
+        'zlib/zlib.gyp:zlib'
        ],
       'include_dirs': [
           'freetype/include',
           'freetype/include/freetype',
           'freetype/objs',
-          'freetype/builds/unix'
       ],
       'all_dependent_settings': {
         'include_dirs': [
           'freetype/include',
           'freetype/include/freetype',
           'freetype/objs',
-          'freetype/builds/unix'
+        ],
+        'conditions': [
+          [ 'OS!="win"', {
+              'include_dirs': [
+                'freetype/builds/unix'
+              ]
+          },{
+              'include_dirs': [
+                'freetype/include/freetype/config'
+              ]
+          }]
         ],
         'libraries': [ '-lz' ],
       },
@@ -45,10 +54,8 @@
         '_GNU_SOURCE=1',
         'FT_CONFIG_CONFIG_H=<ftconfig.h>',
         'FT2_BUILD_LIBRARY',
-        'FT_CONFIG_OPTION_SYSTEM_ZLIB',
       ],
       'sources': [
-        'freetype/builds/unix/ftsystem.c',
         'freetype/src/base/ftdebug.c',
         'freetype/src/base/ftinit.c',
         'freetype/src/base/ftbase.c',
@@ -90,6 +97,20 @@
         'freetype/src/psaux/psaux.c',
         'freetype/src/psnames/psmodule.c',
       ],
+      'conditions': [
+        [ 'OS!="win"', {
+          'include_dirs': [
+            'freetype/builds/unix'
+          ],
+          'sources': [
+            'freetype/builds/unix/ftsystem.c'
+          ]
+        },{
+          'include_dirs': [
+            'freetype/include/freetype/config'
+          ],
+        }]
+      ]
     },
     {
       'target_name': 'hb',
@@ -108,9 +129,6 @@
         ],
       },
       'defines': [
-        '_ALL_SOURCE=1',
-        '_GNU_SOURCE=1',
-        'STDC_HEADERS=1',
         'HAVE_ATEXIT=1',
         'HAVE_FALLBACK=1',
         'HAVE_FONTCONFIG=1',
@@ -119,15 +137,24 @@
         'HAVE_ICU=1',
         'HAVE_INTEL_ATOMIC_PRIMITIVES=1',
         'HAVE_ISATTY=1',
-        'HAVE_MMAP=1',
-        'HAVE_MPROTECT=1',
         'HAVE_OT=1',
-        'HAVE_PTHREAD=1',
-        'HAVE_PTHREAD_PRIO_INHERIT=1',
-        'HAVE_SYSCONF=1',
-        'HAVE_SYS_MMAN_H=1',
         'HAVE_UCDN=1',
-        'HAVE_UNISTD_H=1',
+      ],
+      'conditions': [
+        [ 'OS!="win"', {
+          'defines': [
+            '_ALL_SOURCE=1',
+            '_GNU_SOURCE=1',
+            'STDC_HEADERS=1',
+            'HAVE_MMAP=1',
+            'HAVE_MPROTECT=1',
+            'HAVE_PTHREAD=1',
+            'HAVE_PTHREAD_PRIO_INHERIT=1',
+            'HAVE_SYSCONF=1',
+            'HAVE_SYS_MMAN_H=1',
+            'HAVE_UNISTD_H=1',
+          ]
+        }]
       ],
       'libraries': [
       ],
@@ -319,7 +346,7 @@
         'fc-case#host',
         'fc-case-gen',
         'fc-lang#host',
-#        'libxml2/libxml.gyp:libxml'
+        'libxml2/libxml.gyp:libxml'
        ],
       'include_dirs': [
         'fontconfig'
@@ -328,20 +355,16 @@
         'include_dirs': [
           'fontconfig'
         ],
-        'libraries': [
-            '-lexpat'
-        ],
       },
       'defines': [
-        '_ALL_SOURCE=1',
-        '_GNU_SOURCE=1',
-        'STDC_HEADERS=1',
+        'USE_ICONV=0',
+        'ENABLE_LIBXML2=1',
+        'VERSION="2.11.93"',
+        'FC_DEFAULT_FONTS="/usr/share/fonts"',
+        'FC_ADD_FONTS="yes"',
+        'FC_CACHEDIR="/usr/local/var/cache/fontconfig"',
+        'FONTCONFIG_PATH="/usr/local/etc/fonts"',
         'FLEXIBLE_ARRAY_MEMBER=/**/',
-        'HAVE_FCNTL_H=1',
-        'HAVE_FSTATVFS=1',
-        'HAVE_FSTATFS=1',
-        'HAVE_PTHREAD=1',
-        'HAVE_STRUCT_STATFS_F_FLAGS=1',
         'HAVE_FT_BITMAP_SIZE_Y_PPEM=1',
         'HAVE_FT_GET_BDF_PROPERTY=1',
         'HAVE_FT_GET_NEXT_CHAR=1',
@@ -349,44 +372,13 @@
         'HAVE_FT_GET_X11_FONT_FORMAT=1',
         'HAVE_FT_HAS_PS_GLYPH_NAMES=1',
         'HAVE_FT_SELECT_SIZE=1',
-        'HAVE_GETOPT=1',
-        'HAVE_GETOPT_LONG=1',
-        'HAVE_LINK=1',
-        'HAVE_LSTAT=1',
-        'HAVE_MKDTEMP=1',
-        'HAVE_MKOSTEMP=1',
-        'HAVE_MKSTEMP=1',
-        'HAVE_MMAP=1',
-        'HAVE_POSIX_FADVISE=1',
-        'HAVE_RAND=1',
-        'HAVE_RAND_R=1',
-        'HAVE_RANDOM=1',
-        'HAVE_RANDOM_R=1',
-        'HAVE_LRAND48=1',
         'HAVE_STDINT_H=1',
-        'HAVE_STRUCT_DIRENT_D_TYPE=1',
-        'HAVE_SYS_MOUNT_H=1',
-        'HAVE_SYS_PARAM_H=1',
-        'HAVE_SYS_STATFS_H=1',
-        'HAVE_SYS_STATVFS_H=1',
-        'HAVE_SYS_STAT_H=1',
-        'HAVE_SYS_TYPES_H=1',
-        'HAVE_SYS_VFS_H=1',
-        'HAVE_WARNING_CPP_DIRECTIVE=1',
-        'HAVE_INTEL_ATOMIC_PRIMITIVES=1',
-        'USE_ICONV=0',
-#        'ENABLE_LIBXML2=1',
-        'VERSION="2.11.93"',
-        'FC_DEFAULT_FONTS="/usr/share/fonts"',
-        'FC_ADD_FONTS="yes"',
-        'FC_CACHEDIR="/usr/local/var/cache/fontconfig"',
-        'FONTCONFIG_PATH="/usr/local/etc/fonts"',
+        'HAVE_FCNTL_H=1',
+        'HAVE_RAND=1',
+#'HAVE_CONFIG_H=1',
       ],
       'cflags': [
         '-include config-fixups.h'
-      ],
-      'libraries': [
-        '-lexpat'
       ],
       'sources': [
         # Generated...
@@ -428,6 +420,56 @@
         'fontconfig/src/fcxml.c',
         'fontconfig/src/ftglue.h',
         'fontconfig/src/ftglue.c',
+      ],
+      'conditions': [
+        [ 'OS!="win"', {
+          'defines': [
+            '_ALL_SOURCE=1',
+            '_GNU_SOURCE=1',
+            'STDC_HEADERS=1',
+            'HAVE_FCNTL_H=1',
+            'HAVE_FSTATVFS=1',
+            'HAVE_FSTATFS=1',
+            'HAVE_PTHREAD=1',
+            'HAVE_STRUCT_STATFS_F_FLAGS=1',
+            'HAVE_GETOPT=1',
+            'HAVE_GETOPT_LONG=1',
+            'HAVE_LINK=1',
+            'HAVE_LSTAT=1',
+            'HAVE_MKDTEMP=1',
+            'HAVE_MKOSTEMP=1',
+            'HAVE_MKSTEMP=1',
+            'HAVE_MMAP=1',
+            'HAVE_POSIX_FADVISE=1',
+            'HAVE_RAND=1',
+            'HAVE_RAND_R=1',
+            'HAVE_RANDOM=1',
+            'HAVE_RANDOM_R=1',
+            'HAVE_LRAND48=1',
+            'HAVE_STRUCT_DIRENT_D_TYPE=1',
+            'HAVE_SYS_MOUNT_H=1',
+            'HAVE_SYS_PARAM_H=1',
+            'HAVE_SYS_STATFS_H=1',
+            'HAVE_SYS_STATVFS_H=1',
+            'HAVE_SYS_STAT_H=1',
+            'HAVE_SYS_TYPES_H=1',
+            'HAVE_SYS_VFS_H=1',
+            'HAVE_WARNING_CPP_DIRECTIVE=1',
+            'HAVE_INTEL_ATOMIC_PRIMITIVES=1',
+          ]
+        },{
+          'defines': [
+            'HAVE_WARNING_CPP_DIRECTIVE=1',
+            'HAVE_INTEL_ATOMIC_PRIMITIVES=1',
+            'close=_close'
+          ],
+          'sources': [
+            'win/dirent.h'
+          ],
+          'include_dirs': [
+            'fontconfig/win'
+          ]
+        }]
       ],
       'actions': [
         {
@@ -730,6 +772,11 @@
           'dependencies': [
             'libuv/uv.gyp:libuv'
           ],
+        }],
+        [ 'OS=="win"', {
+          'libraries': [
+            '-lShlwapi'
+          ]
         }]
       ]
     },
@@ -748,7 +795,7 @@
          'protobuf-c/protobuf-c.gyp:protoc-c#host',
          'protobuf-c/protobuf-c.gyp:protobuf-c',
          'test-fixtures/test-fixtures.gyp:libtest-fixtures',
-         'LibOVR/libovr.gyp:libovr',
+         #'LibOVR/libovr.gyp:libovr',
          'wslay/wslay.gyp:libwslay',
          'h2o/h2o.gyp:libh2o',
          'nsgif/nsgif.gyp:nsgif',
