@@ -35,11 +35,13 @@ c_get_xdg_data_home(void)
 
     if (!resolved) {
         resolved = getenv("XDG_DATA_HOME");
+#ifndef _WIN32
         if (!resolved) {
             const char *home = getenv("HOME");
             if (home)
                 resolved = c_strconcat(home, "/.local/share/", NULL);
         }
+#endif
     }
 
     return resolved;
@@ -52,8 +54,10 @@ c_get_xdg_data_dirs(void)
 
     if (!resolved) {
         resolved = getenv("XDG_DATA_DIRS");
+#ifndef _WIN32
         if (!resolved)
             resolved = "/usr/local/share/:/usr/share/";
+#endif
     }
 
     return resolved;

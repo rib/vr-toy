@@ -1756,13 +1756,11 @@ uint32_t c_random_uint32(void);
 int32_t c_random_int32_range(int32_t begin, int32_t end);
 bool c_random_boolean(void);
 
-#ifdef C_PLATFORM_LINUX
 /* XDG dirs */
 const char *c_get_xdg_data_home(void);
 const char *c_get_xdg_data_dirs(void);
 typedef void (*c_xdg_dir_callback_t)(const char *dir, void *data);
 void c_foreach_xdg_data_dir(c_xdg_dir_callback_t callback, void *user_data);
-#endif
 
 
 enum c_url_fields

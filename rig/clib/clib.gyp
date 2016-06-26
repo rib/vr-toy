@@ -59,6 +59,7 @@
         'clib/cmem.c',
         'clib/coutput.c',
         'clib/cpath.c',
+        'clib/cxdg.c',
         'clib/cptrarray.c',
         'clib/cqsort.c',
         'clib/cquark.c',
@@ -184,7 +185,6 @@
             'clib/cdir-unix.c',
             'clib/cdate-unix.c',
             'clib/cmisc-unix.c',
-            'clib/cxdg-unix.c',
             'clib/ctls.c',
 	    'clib/cbacktrace-linux.c',
           ]
@@ -201,7 +201,6 @@
           'sources': [
             'clib/cdir-unix.c',
             'clib/cdate-unix.c',
-            'clib/cxdg-unix.c',
             'clib/ctls.c',
             'clib/vasprintf.c',
           ]
