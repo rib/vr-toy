@@ -28,12 +28,21 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/types.h>
-#include <unistd.h>
 #include <sys/stat.h>
-#include <err.h>
-#include <pwd.h>
 #include <sys/types.h>
+
+#ifdef _WIN32
+#include <windows.h>
+#include <io.h>
+#include <fcntl.h>
+#define open _open
+#define close _close
+#define O_RDONLY _O_RDONLY
+#define O_CLOEXEC 0
+#else
+#include <unistd.h>
 #include <sys/xattr.h>
+#endif
 
 #include <clib.h>
 #include <uv.h>
@@ -116,7 +125,6 @@ work_cb(uv_work_t *work_req)
 {
     xdgmime_request_t *req = work_req->data;
     int fd = open(req->filename, O_RDONLY|O_CLOEXEC);
-    ssize_t size;
     bool needs_magic = false;
     const char *mime;
 
@@ -125,14 +133,16 @@ work_cb(uv_work_t *work_req)
         return;
     }
 
-    size = fgetxattr(fd, "user.mime_type",
-                     req->type_buf, sizeof(req->type_buf) - 1);
+#ifndef _WIN32
+    ssize_t size = fgetxattr(fd, "user.mime_type",
+                             req->type_buf, sizeof(req->type_buf) - 1);
     if (size > 0) {
         req->type_buf[size - 1] = '\0';
         req->mime_type = req->type_buf;
         close(fd);
         return;
     }
+#endif
 
     mime = glob_lookup_mime_type(req->filename, &needs_magic);
     if (mime && !needs_magic)

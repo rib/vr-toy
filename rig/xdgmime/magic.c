@@ -29,8 +29,12 @@
 #include <ctype.h>
 #include <limits.h>
 #include <sys/types.h>
+#ifdef _WIN32
+/* notohs... */
+#include <Winsock2.h>
+#else
 #include <arpa/inet.h>
-#include <err.h>
+#endif
 
 #include <clib.h>
 
@@ -191,7 +195,7 @@ match_section(FILE *fp, magic_section_t *section, c_array_t *scratch_array)
 
     c_array_set_size(scratch_array, section->read_size);
     n_bytes = fread(scratch_array->data, 1, section->read_size, fp);
-    if (n_bytes < 0)
+    if (n_bytes == 0)
         return false;
 
     memset(scratch_array->data + n_bytes, 0, section->read_size - n_bytes);
@@ -365,7 +369,7 @@ add_magic_sections(const char *path)
                 goto exit;
             }
 
-            if (fread(&value_length, 2, 1, fp) < 0) {
+            if (fread(&value_length, 2, 1, fp) != 1) {
                 c_warning("Failed to read mime type magic value length in section (%s); "
                           "ignoring rest of file (%s)", mime_type, path);
                 goto exit;
@@ -380,7 +384,7 @@ add_magic_sections(const char *path)
 
             blob->value_length = value_length;
             blob->value = c_malloc(value_length);
-            if (fread(blob->value, value_length, 1, fp) < 0) {
+            if (fread(blob->value, value_length, 1, fp) != 1) {
                 c_warning("Failed to read mime type magic value in section (%s); "
                           "ignoring rest of file (%s)", mime_type, path);
                 free_blob(blob);
@@ -392,7 +396,7 @@ add_magic_sections(const char *path)
                 goto end_of_blob;
 
             blob->mask = c_malloc(value_length);
-            if (fread(blob->mask, value_length, 1, fp) < 0) {
+            if (fread(blob->mask, value_length, 1, fp) != 1) {
                 c_warning("Failed to read mime type magic value mask in section (%s); "
                           "ignoring rest of file (%s)", mime_type, path);
                 free_blob(blob);

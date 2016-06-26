@@ -29,8 +29,11 @@
 #include <limits.h>
 #include <ctype.h>
 #include <errno.h>
-#include <err.h>
+#ifdef _WIN32
+#include "Shlwapi.h"
+#else
 #include <fnmatch.h>
+#endif
 #include <stdbool.h>
 
 #include <clib.h>
@@ -73,19 +76,14 @@ static bool
 glob_read_file(const char *path)
 {
     FILE *fp;
-    size_t line_buf_len;
-    char *line;
+    char line[1024];
     bool added_glob = false;
 
     if ((fp = fopen(path, "r")) == NULL)
         return NULL;
 
-    line_buf_len = 512;
-    line = malloc(line_buf_len);
-    if (!line)
-        c_error("Could not allocate getline buffer");
-
-    while (getline(&line, &line_buf_len, fp) > 0) {
+    /* XXX: using fgets for portability to Windows :-/ */
+    while (fgets(line, sizeof(line), fp)) {
         char *weight_str;
         int weight;
         char *mime;
@@ -165,7 +163,6 @@ glob_read_file(const char *path)
     }
 
     fclose(fp);
-    free(line);
 
     return added_glob;
 }
@@ -268,8 +265,13 @@ lookup_mime_type_case_sensitive(const char *filename,
         for (l = fancy_globs; n_entries < MAX_CONFLICTS && l; l = l->next) {
             entry = l->data;
 
+#ifdef _WIN32
+            if (PathMatchSpec(filename, entry->glob))
+                entries[n_entries++] = entry;
+#else
             if (fnmatch(entry->glob, filename, FNM_NOESCAPE))
                 entries[n_entries++] = entry;
+#endif
         }
     }
 
@@ -305,12 +307,34 @@ glob_lookup_mime_type(const char *filename,
                       bool *needs_magic)
 {
     int len = strlen(filename);
+
+#ifdef _WIN32
+    char *fname = alloca(len + 1);
+    char *ext = alloca(len + 1);
+    char *base = alloca(len + 1);
+    const char *mime_type;
+
+    _splitpath_s(filename,
+                 NULL, /* drive */
+                 0,
+                 NULL, /* dir */
+                 0,
+                 fname, /* base name (no ext) */
+                 len + 1,
+                 ext,
+                 len + 1);
+    if (ext[0] == '\0')
+        base = fname;
+    else
+        snprintf(base, len + 1, "%s.%s", fname, ext);
+#else
     char *copy = alloca(len + 1);
     char *base;
     const char *mime_type;
 
     memcpy(copy, filename, len + 1);
     base = basename(filename);
+#endif
 
     mime_type = lookup_mime_type_case_sensitive(base, needs_magic);
 
