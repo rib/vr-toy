@@ -14,8 +14,13 @@
 	     ['CC', '<!(which emcc)'],
 	     ['CXX', '<!(which em++)'],
 	]
-     },{
      }],
+     ['OS=="win"', {
+        'make_global_settings': [
+	     ['CC', '<!(where clang-cl)'],
+	     ['CXX', '<!(where clang-cl)'],
+        ]
+     }]
   ],
 
   'target_defaults': {
@@ -29,16 +34,10 @@
     'configurations': {
       'Debug': {
         'defines': [ 'DEBUG', '_DEBUG' ],
-        'cflags': [ '-g', '-O0', '-fwrapv' ],
+        'cflags': [ '-g', '-O0' ],
         'msvs_settings': {
           'VCCLCompilerTool': {
-            'target_conditions': [
-              ['_type=="static_library"', {
-                'RuntimeLibrary': 1, # static debug
-              }, {
-                'RuntimeLibrary': 3, # DLL debug
-              }],
-            ],
+            'RuntimeLibrary': 1, # 1= static debug, 3 = DLL debug
             'Optimization': 0, # /Od, no optimization
             'MinimalRebuild': 'false',
             'OmitFramePointers': 'false',
@@ -58,6 +57,10 @@
           }],
         ]
       },
+      'Debug_x64': {
+        'inherit_from': ['Debug'],
+        'msvs_configuration_platform': 'x64',
+      },
       'Release': {
         'defines': [ 'NDEBUG' ],
         'cflags': [
@@ -69,13 +72,7 @@
         ],
         'msvs_settings': {
           'VCCLCompilerTool': {
-            'target_conditions': [
-              ['_type=="static_library"', {
-                'RuntimeLibrary': 0, # static release
-              }, {
-                'RuntimeLibrary': 2, # debug release
-              }],
-            ],
+            'RuntimeLibrary': 0, # 0 = static release, 2 = DLL release
             'Optimization': 3, # /Ox, full optimization
             'FavorSizeOrSpeed': 1, # /Ot, favour speed over size
             'InlineFunctionExpansion': 2, # /Ob2, inline anything eligible
@@ -96,7 +93,11 @@
             'LinkIncremental': 1, # disable incremental linking
           },
         },
-      }
+      },
+      'Release_x64': {
+        'inherit_from': ['Release'],
+        'msvs_configuration_platform': 'x64',
+      },
     },
     'msvs_settings': {
       'VCCLCompilerTool': {
@@ -109,6 +110,9 @@
         'WarnAsError': 'false',
         'AdditionalOptions': [
            '/MP', # compile across multiple CPUs
+           '-fms-compatibility-version=19',
+           '-Qunused-arguments',
+           '-Wno-microsoft-unqualified-friend'
          ],
       },
       'VCLibrarianTool': {
@@ -149,6 +153,10 @@
         'target_conditions': [
           ['_type=="static_library"', {
             'standalone_static_library': 1, # disable thin archive which needs binutils >= 2.19
+          } , {
+            'cflags': [
+                '-fPIC'
+            ]
           }],
         ],
         'conditions': [
