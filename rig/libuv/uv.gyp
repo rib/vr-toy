@@ -111,6 +111,14 @@
               '-lws2_32'
             ],
           },
+          # GYP 'cflags' are ignore on windows :-/ ...
+          'msvs_settings': {
+            'VCCLCompilerTool': {
+              'AdditionalOptions': [
+                '-FIintrin.h'
+              ]
+            }
+          }
         }, { # Not Windows i.e. POSIX
           'cflags': [
             '-g',

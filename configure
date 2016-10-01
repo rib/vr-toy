@@ -95,6 +95,12 @@ enabled = {}
 options = {
         "_": {
             "enabled": True,
+            "conditions": [
+                [ 'OS=="win"', {
+                    "public_defines": { "CG_HAS_GL_SUPPORT", "CG_HAS_WIN32_SUPPORT", "CG_HAS_WGL_SUPPORT" },
+                    "libraries": [ '-lopengl32.lib' ],
+                }],
+            ]
         },
         "debug": {
             "help": "debug support",
@@ -107,30 +113,31 @@ options = {
 #            "pkg-config": "opencv >= 3.0.0",
 #            "defines": [ "USE_OPENCV" ]
 #        },
-        "oculus_rift": {
-            "help": "OculusRift support",
-            "enabled": True,
-            "defines": [ "ENABLE_OCULUS_RIFT" ],
-        },
+#        "oculus_rift": {
+#            "help": "OculusRift support",
+#            "enabled": True,
+#            "defines": [ "ENABLE_OCULUS_RIFT" ],
+#        },
         "ffmpeg": {
             "help": "ffmpeg support",
             "enabled": True,
+            "defines": [ "USE_FFMPEG" ],
             "pkg-config": "libavcodec libavformat libavutil libswscale libswresample",
-            "defines": [ "USE_FFMPEG" ]
         },
         "alsa": {
+            "platforms": [ "linux" ],
             "help": "Alsa audio support",
             "enabled": True,
             "pkg-config": "alsa",
             "defines": [ "USE_ALSA" ]
         },
-#        "uv": {
-#            "help": "libuv support",
-#            "enabled": True,
-#            "pkg-config": "libuv",
-#            "public_defines": { "CG_HAS_UV_SUPPORT" },
-#            "defines": [ "USE_UV" ]
-#        },
+        "uv": {
+            "help": "libuv support",
+            "enabled": True,
+            "pkg-config": "libuv",
+            "public_defines": { "CG_HAS_UV_SUPPORT" },
+            "defines": [ "USE_UV" ]
+        },
         "glib": {
             "help": "GLib support",
             "enabled": False,
@@ -139,13 +146,14 @@ options = {
             "defines": [ "USE_GLIB" ]
         },
         "x11": {
-            "enabled": True,
+            "platforms": [ "linux" ],
             "pkg-config": "x11 xdamage xcomposite xfixes xext xrandr xkbcommon-x11 x11-xcb xext",
             "public_defines": { "CG_HAS_XLIB_SUPPORT", "CG_HAS_X11_SUPPORT" },
             "ldflags": [ "-lXi" ],
-            "defines": { "USE_X11" }
+            "defines": { "USE_X11" },
         },
         "glx": {
+            "platforms": [ "linux" ],
             "requires": { "x11" }, #TODO check
             "help": "GLX support",
             "enabled": True,
@@ -153,54 +161,54 @@ options = {
             "public_defines": { "CG_HAS_GLX_SUPPORT", "CG_HAS_GL_SUPPORT", "CG_HAS_XLIB_SUPPORT", "CG_HAS_X11_SUPPORT" },
         },
         "egl": {
+            "platforms": [ "linux" ],
             "help": "EGL support",
             "enabled": True,
             "pkg-config": "egl",
             "public_defines": { "CG_HAS_EGL_SUPPORT" },
         },
         "egl_wayland": {
+            "platforms": [ "linux" ],
             "help": "Wayland EGL support",
             "enabled": True,
             "pkg-config": "wayland-egl",
             "public_defines": { "CG_HAS_EGL_PLATFORM_WAYLAND_SUPPORT" },
         },
         "egl_kms": {
+            "platforms": [ "linux" ],
             "help": "Kernel Mode Setting EGL support",
             "enabled": False,
             "pkg-config": "egl gbm libdrm",
             "public_defines": { "CG_HAS_EGL_PLATFORM_KMS_SUPPORT" },
         },
         "egl_xlib": {
+            "platforms": [ "linux" ],
             "help": "XLib EGL support",
             "enabled": True,
             "pkg-config": "egl x11",
             "public_defines": { "CG_HAS_EGL_PLATFORM_XLIB_SUPPORT" },
         },
         "sdl": {
+            "platforms": [ "linux" ],
             "help": "SDL 2.0 support",
             "enabled": False,
             "pkg-config": "sdl2",
             "public_defines": { "CG_HAS_SDL_SUPPORT" },
         },
         "gles2": {
+            "platforms": [ "linux" ],
             "help": "GLES 2.0 support",
             "enabled": True,
             "pkg-config": "glesv2",
             "public_defines": { "CG_HAS_GLES2_SUPPORT" },
         },
         "ncurses": {
+            "platforms": [ "linux" ],
             "help": "ncurses debug console",
-            "enabled": True,
+            "enabled": False,
             "pkg-config": "ncursesw",
             "defines": [ "USE_NCURSES" ],
         },
-        "conditions": [
-            [ 'OS=="win"', {
-                "_": {
-                    "public_defines": { "CG_HAS_GL_SUPPORT", "CG_HAS_WIN32_SUPPORT" }
-                }
-            }]
-        ]
 }
 
 output = {
@@ -225,29 +233,37 @@ def merge(a, b, path=None):
             a[key] = b[key]
     return a
 
+if platform.system() == "Windows":
+    OS = "win"
+elif platform.system() == "Linux":
+    OS = "linux"
+
+cond_vars = {}
+cond_vars['OS'] = OS
+
 def add_conditionals(_dict):
+    if 'conditions' in _dict:
+        conditions = _dict['conditions']
+        del _dict['conditions']
 
-    conditions = _dict['conditions']
-    del _dict['conditions']
+        for cond in conditions:
+            expr = cond[0]
+            if eval(expr, cond_vars):
+                _dict = merge(_dict, cond[1])
+            elif len(cond) >= 3:
+                _dict = merge(_dict, cond[2])
 
-    for cond in conditions:
-        cond_vars = {}
-        if platform.system() == "Windows":
-            cond_vars['OS'] = "win"
-        elif platform.system() == "Linux":
-            cond_vars['OS'] = "linux"
-
-        expr = cond[0]
-        if eval(expr, cond_vars):
-            _dict = merge(_dict, cond[1])
-        elif len(cond) >= 3:
-            _dict = merge(_dict, cond[2])
+    for key in _dict:
+        child = _dict[key]
+        if isinstance(child, dict):
+            add_conditionals(child)
 
     return _dict
 
 
 options = add_conditionals(options)
 
+# Defaults...
 for name, opt in options.items():
     if name == "conditions":
         continue
@@ -257,11 +273,18 @@ for name, opt in options.items():
         opt["includes"] = []
     if "ldflags" not in opt:
         opt["ldflags"] = []
-    if opt["enabled"] and "pkg-config" in opt:
-        if platform.system() == "Linux":
+    if "enabled" not in opt:
+        if OS == "linux" and "pkg-config" in opt:
             opt["enabled"] = pkg_config_exists(opt["pkg-config"])
         else:
             opt["enabled"] = False
+
+for name, opt in options.items():
+    if "platforms" in opt:
+        if OS not in opt['platforms']:
+            opt['enabled'] = False
+
+for name, opt in options.items():
     if "help" in opt:
         add_option(parser, name, opt)
 
@@ -280,32 +303,36 @@ options['_']["defines"].append("RIG_BIN_DIR=\"" + opt_args.prefix + "/bin\"")
 for name, opt in options.items():
     if "enable_" + name in opt_args_dict:
         if opt_args_dict["enable_" + name]:
-            if "pkg-config" in opt:
+            print("explicit enable:" + name)
+            if OS == "linux" and "pkg-config" in opt:
                 if not pkg_config_exists(opt["pkg-config"]):
                     sys.exit(opt["pkg-config"] + " required for enabling " + name + " support is missing")
             opt["enabled"] = True
             enabled[name] = opt
         else:
+            print("explicit disable:" + name)
             opt["enabled"] = False
     else:
+        print("default " + name)
         if opt["enabled"]:
             enabled[name] = opt
 
-for name, opt in enabled.items():
-    if "pkg-config" in opt:
-        cflags = pkg_config_get(opt["pkg-config"], "--cflags")
-        tokens = cflags.split()
-        if len(tokens):
-            for tok in tokens:
-                if tok[:2] == "-I":
-                    opt["includes"].append(tok[2:])
-                elif tok[:2] == "-D":
-                    opt["defines"].append(tok[2:])
-        ldflags = pkg_config_get(opt["pkg-config"], "--libs")
-        tokens = ldflags.split()
-        if len(tokens):
-            for tok in tokens:
-                opt["ldflags"].append(tok)
+if OS == "linux":
+    for name, opt in enabled.items():
+        if "pkg-config" in opt:
+            cflags = pkg_config_get(opt["pkg-config"], "--cflags")
+            tokens = cflags.split()
+            if len(tokens):
+                for tok in tokens:
+                    if tok[:2] == "-I":
+                        opt["includes"].append(tok[2:])
+                    elif tok[:2] == "-D":
+                        opt["defines"].append(tok[2:])
+            ldflags = pkg_config_get(opt["pkg-config"], "--libs")
+            tokens = ldflags.split()
+            if len(tokens):
+                for tok in tokens:
+                    opt["ldflags"].append(tok)
 
 
 gyp_config = open("config.gypi", "w")
@@ -322,7 +349,7 @@ for name, opt in options.items():
 if opt_args.host != None and "emscripten" in opt_args.host:
     gyp_config.write("    'OS%': 'emscripten',\n")
 
-if platform.system() == "Windows":
+if OS == "win":
     gyp_config.write("    'os_posix%': '0',\n")
 else:
     gyp_config.write("    'os_posix%': '1',\n")
@@ -339,6 +366,10 @@ gyp_config.write("    'is_nodejs_build%': '1',\n")
 
 gyp_config.write("  },\n")
 
+
+# FIXME: we shouldn't be setting up target_defaults that
+# will affect *all* targets. We should just setup helper
+# variables that the various .gyp files can reference
 gyp_config.write("""
   'target_defaults': {
     'include_dirs': [
@@ -362,17 +393,20 @@ for name, opt in enabled.items():
 
 gyp_config.write("""
     ],
-    'ldflags': [
+    'link_settings': {
+      'libraries': [
 """)
 
 for name, opt in enabled.items():
-    if "ldflags" in opt:
-        gyp_config.write("      # " + name + " ldflags...\n")
-        for flag in opt["ldflags"]:
-            gyp_config.write("      '" + flag + "',\n")
+    if "libraries" in opt:
+        gyp_config.write("        # " + name + " libs...\n")
+        for lib in opt["libraries"]:
+            gyp_config.write("        '" + lib + "',\n")
 
 gyp_config.write("""
-  ]}
+      ]
+    }
+  }
 """)
 gyp_config.write("}\n")
 
@@ -386,10 +420,11 @@ gyp_args = []
 
 gyp_args.append(os.path.join(src_dir, 'vr-toy.gyp'))
 
-if platform.system() == "Windows":
+if OS == "win":
     os.environ['CC'] = "clang-cl.exe"
     os.environ['CXX'] = "clang-cl.exe"
     os.environ['GYP_MSVS_VERSION'] = "2015"
+    gyp_args.append('-DMSVS_VERSION=2015') # XXX: HACK to appease openssl.gypi
     gyp_args.append('--no-parallel')
     gyp_args.append('-Dtarget_arch=' + host_arch())
     gyp_args.append('-Dos_posix=0')
@@ -416,7 +451,7 @@ gyp_args.append('-Dlibrary=shared_library')
 if opt_args.enable_shared:
     gyp_args.append('-Drig_library=shared_library')
 
-if platform.system() == "Windows":
+if OS == "win":
     gyp_args.append('-DOS=win')
 
 if use_libuv:

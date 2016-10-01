@@ -69,6 +69,41 @@ destroy_tls_data(void)
     } while(repeat);
 }
 
+void NTAPI _tls_callback_func(PVOID dll_handle, DWORD reason, PVOID)
+{
+    switch (reason) {
+    case DLL_PROCESS_ATTACH:
+        InitializeCriticalSection(&tls_lock);
+        break;
+    case DLL_THREAD_DETACH:
+        destroy_tls_data();
+        break;
+    }
+}
+
+#ifdef _WIN64
+     #pragma comment (linker, "/INCLUDE:_tls_used")
+     #pragma comment (linker, "/INCLUDE:tls_callback_sym")
+#else
+     #pragma comment (linker, "/INCLUDE:__tls_used")
+     #pragma comment (linker, "/INCLUDE:_tls_callback_sym")
+#endif
+
+#ifdef _WIN64
+#pragma const_seg(".CRT$XLF")
+EXTERN_C const
+#else
+#pragma data_seg(".CRT$XLF")
+EXTERN_C
+#endif
+PIMAGE_TLS_CALLBACK tls_callback_sym = _tls_callback_func;
+#ifdef _WIN64
+#pragma const_seg()
+#else
+#pragma data_seg()
+#endif //_WIN64
+
+#if 0
 BOOL WINAPI
 DllMain(HINSTANCE instance,
         DWORD reason,
@@ -84,3 +119,4 @@ DllMain(HINSTANCE instance,
     }
     return TRUE;
 }
+#endif

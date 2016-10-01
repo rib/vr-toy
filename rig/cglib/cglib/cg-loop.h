@@ -31,9 +31,9 @@
 #error "Only <cg/cg.h> can be included directly."
 #endif
 
-#ifndef __CG_LOOP_H__
-#define __CG_LOOP_H__
+#pragma once
 
+#include <cglib/cglib-platform.h>
 #include <cglib/cg-defines.h>
 #include <cglib/cg-device.h>
 
@@ -80,7 +80,7 @@ CG_BEGIN_DECLS
  * Stability: unstable
  */
 typedef enum {
-#ifndef CG_HAS_POLL_SUPPORT
+#ifdef CG_HAS_POLL_SUPPORT
     CG_POLL_FD_EVENT_IN = POLLIN,
     CG_POLL_FD_EVENT_PRI = POLLPRI,
     CG_POLL_FD_EVENT_OUT = POLLOUT,
@@ -228,5 +228,3 @@ void cg_loop_dispatch(cg_renderer_t *renderer,
 void cg_loop_dispatch_fd(cg_renderer_t *renderer, int fd, int events);
 
 CG_END_DECLS
-
-#endif /* __CG_LOOP_H__ */

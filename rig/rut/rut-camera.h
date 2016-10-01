@@ -46,7 +46,7 @@ typedef struct _rut_camera_props_t {
 
     float viewport[4];
 
-    float near, far;
+    float z_near, z_far;
 
     struct {
         float fov;
@@ -105,9 +105,9 @@ typedef struct _rut_camera_vtable_t {
 
     const c_matrix_t *(*get_projection)(rut_object_t *camera);
 
-    void (*set_near_plane)(rut_object_t *camera, float near);
+    void (*set_near_plane)(rut_object_t *camera, float z_near);
 
-    void (*set_far_plane)(rut_object_t *camera, float far);
+    void (*set_far_plane)(rut_object_t *camera, float z_far);
 
     rut_projection_t (*get_projection_mode)(rut_object_t *camera);
 
@@ -203,11 +203,11 @@ const float *rut_camera_get_viewport(rut_object_t *camera);
 
 const c_matrix_t *rut_camera_get_projection(rut_object_t *camera);
 
-void rut_camera_set_near_plane(rut_object_t *camera, float near);
+void rut_camera_set_near_plane(rut_object_t *camera, float z_near);
 
 float rut_camera_get_near_plane(rut_object_t *camera);
 
-void rut_camera_set_far_plane(rut_object_t *camera, float far);
+void rut_camera_set_far_plane(rut_object_t *camera, float z_far);
 
 float rut_camera_get_far_plane(rut_object_t *camera);
 

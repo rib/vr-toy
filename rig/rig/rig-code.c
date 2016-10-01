@@ -29,7 +29,6 @@
 
 #include <rig-config.h>
 
-#include <dlfcn.h>
 #include <clib.h>
 #include <cmodule.h>
 
@@ -223,8 +222,7 @@ recompile(rig_engine_t *engine)
     if (module) {
         rig_frontend_update_simulator_dso(engine->frontend, dso_data, dso_len);
 
-#warning                                                                       \
-        "fix freeing of llvm module - crashes due to null llvm context impl pointer"
+#warning "fix freeing of llvm module - crashes due to null llvm context impl pointer"
         // rut_object_unref (module);
     }
 }

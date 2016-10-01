@@ -147,10 +147,22 @@ work_cb(uv_work_t *work_req)
     mime = glob_lookup_mime_type(req->filename, &needs_magic);
     if (mime && !needs_magic)
         req->mime_type = mime;
-    else
-        req->mime_type = magic_lookup_mime_type(fd);
+    else {
+        FILE *fp = fdopen(fd, "r");
 
-    close(fd);
+        if (fp) {
+            req->mime_type = magic_lookup_mime_type(fp);
+
+            /* NB: fclose() will effectively close() the fd so make sure not to
+             * also call close() below */
+            fclose(fp);
+            fd = -1;
+        } else
+            c_warning("Failed to open buffered FILE * for detecting mime type");
+    }
+
+    if (fd > 0)
+        close(fd);
 }
 
 static void

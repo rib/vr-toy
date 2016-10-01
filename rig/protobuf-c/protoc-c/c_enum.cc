@@ -122,7 +122,7 @@ void EnumGenerator::GenerateDefinition(io::Printer* printer) {
   //Instead we require that the compiler be passed compiler flags
   //to disable packing enums if necessary, but double check the
   //size with a static assertion.
-  printer->Print(vars, "static_assert(sizeof ($classname$) == sizeof (int),"
+  printer->Print(vars, "_Static_assert(sizeof ($classname$) == sizeof (int),"
                  "\"protobuf-c files expect all enums to have the same size as an int "
                  "but your compiler is packing them into smaller sizes.\");\n");
 }

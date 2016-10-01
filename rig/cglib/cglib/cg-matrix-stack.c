@@ -273,8 +273,8 @@ cg_matrix_stack_orthographic(cg_matrix_stack_t *stack,
                              float y_1,
                              float x_2,
                              float y_2,
-                             float near,
-                             float far)
+                             float z_near,
+                             float z_far)
 {
     cg_matrix_entry_load_t *entry;
 
@@ -283,7 +283,7 @@ cg_matrix_stack_orthographic(cg_matrix_stack_t *stack,
     entry->matrix = _cg_magazine_chunk_alloc(cg_matrix_stack_matrices_magazine);
 
     c_matrix_init_identity(entry->matrix);
-    c_matrix_orthographic(entry->matrix, x_1, y_1, x_2, y_2, near, far);
+    c_matrix_orthographic(entry->matrix, x_1, y_1, x_2, y_2, z_near, z_far);
 }
 
 void

@@ -92,11 +92,11 @@ cg_depth_state_get_test_function(cg_depth_state_t *state)
 }
 
 void
-cg_depth_state_set_range(cg_depth_state_t *state, float near, float far)
+cg_depth_state_set_range(cg_depth_state_t *state, float znear, float zfar)
 {
     c_return_if_fail(state->magic == CG_DEPTH_STATE_MAGIC);
-    state->range_near = near;
-    state->range_far = far;
+    state->range_near = znear;
+    state->range_far = zfar;
 }
 
 void

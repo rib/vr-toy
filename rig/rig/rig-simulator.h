@@ -34,10 +34,13 @@ typedef struct _rig_simulator_t rig_simulator_t;
 #if !defined(__ANDROID__) && (defined(__linux__) || defined(__APPLE__))
 #define RIG_SUPPORT_SIMULATOR_PROCESS
 #endif
+#if defined(__unix__) && defined(C_SUPPORTS_THREADS)
+#define RIG_SUPPORT_SIMULATOR_THREAD
+#endif
 
 enum rig_simulator_run_mode {
     RIG_SIMULATOR_RUN_MODE_MAINLOOP,
-#ifdef C_SUPPORTS_THREADS
+#ifdef RIG_SUPPORT_SIMULATOR_THREAD
     RIG_SIMULATOR_RUN_MODE_THREADED,
 #endif
 #ifdef RIG_SUPPORT_SIMULATOR_PROCESS

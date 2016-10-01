@@ -104,9 +104,15 @@ struct gif_animation {
         void *priv;
 };
 
-void gif_create(gif_animation *gif, gif_bitmap_callback_vt *bitmap_callbacks);
-gif_result gif_initialise(gif_animation *gif, size_t size, unsigned char *data);
-gif_result gif_decode_frame(gif_animation *gif, unsigned int frame);
-void gif_finalise(gif_animation *gif);
+#ifdef _WIN32
+#define API_EXPORT __declspec(dllexport)
+#else
+#define API_EXPORT
+#endif
+
+void API_EXPORT gif_create(gif_animation *gif, gif_bitmap_callback_vt *bitmap_callbacks);
+gif_result API_EXPORT gif_initialise(gif_animation *gif, size_t size, unsigned char *data);
+gif_result API_EXPORT gif_decode_frame(gif_animation *gif, unsigned int frame);
+void API_EXPORT gif_finalise(gif_animation *gif);
 
 #endif

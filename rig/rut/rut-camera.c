@@ -170,12 +170,12 @@ rut_camera_get_projection(rut_object_t *object)
 }
 
 void
-rut_camera_set_near_plane(rut_object_t *object, float near)
+rut_camera_set_near_plane(rut_object_t *object, float z_near)
 {
     rut_camera_vtable_t *vtable =
         rut_object_get_vtable(object, RUT_TRAIT_ID_CAMERA);
 
-    vtable->set_near_plane(object, near);
+    vtable->set_near_plane(object, z_near);
 }
 
 float
@@ -184,16 +184,16 @@ rut_camera_get_near_plane(rut_object_t *object)
     rut_camera_props_t *camera =
         rut_object_get_properties(object, RUT_TRAIT_ID_CAMERA);
 
-    return camera->near;
+    return camera->z_near;
 }
 
 void
-rut_camera_set_far_plane(rut_object_t *object, float far)
+rut_camera_set_far_plane(rut_object_t *object, float z_far)
 {
     rut_camera_vtable_t *vtable =
         rut_object_get_vtable(object, RUT_TRAIT_ID_CAMERA);
 
-    vtable->set_far_plane(object, far);
+    vtable->set_far_plane(object, z_far);
 }
 
 float
@@ -202,7 +202,7 @@ rut_camera_get_far_plane(rut_object_t *object)
     rut_camera_props_t *camera =
         rut_object_get_properties(object, RUT_TRAIT_ID_CAMERA);
 
-    return camera->far;
+    return camera->z_far;
 }
 
 rut_projection_t

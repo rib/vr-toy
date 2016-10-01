@@ -671,7 +671,7 @@ rut_poll_shell_integrate_cg_events_via_libuv(rut_shell_t *shell)
 }
 #endif /* USE_UV */
 
-#ifdef USE_UV
+#ifdef RUT_POLL_SUPPORTS_SIGCHILD
 static void
 handle_sigchild(uv_signal_t *handle, int signo)
 {
@@ -691,7 +691,7 @@ rut_poll_init(rut_shell_t *shell, rut_shell_t *main_shell)
 
     c_list_init(&shell->poll_sources);
     c_list_init(&shell->idle_closures);
-#ifndef __EMSCRIPTEN__
+#ifdef RUT_POLL_SUPPORTS_SIGCHILD
     c_list_init(&shell->sigchild_closures);
 #endif
 
@@ -699,9 +699,11 @@ rut_poll_init(rut_shell_t *shell, rut_shell_t *main_shell)
     if (main_shell == NULL) {
         loop = uv_loop_new();
 
+#ifdef RUT_POLL_SUPPORTS_SIGCHILD
         uv_signal_init(loop, &shell->sigchild_handle);
         shell->sigchild_handle.data = shell;
         uv_signal_start(&shell->sigchild_handle, handle_sigchild, SIGCHLD);
+#endif
 
 #ifdef USE_GLIB
         /* XXX: Note: glib work will always be associated with
@@ -734,29 +736,23 @@ rut_poll_init(rut_shell_t *shell, rut_shell_t *main_shell)
 #endif /* USE_UV */
 }
 
+#ifdef RUT_POLL_SUPPORTS_SIGCHILD
 rut_closure_t *
 rut_poll_shell_add_sigchild(rut_shell_t *shell,
                             void (*sigchild_cb)(void *user_data),
                             void *user_data,
                             void (*destroy_cb)(void *user_data))
 {
-#ifdef USE_UV
     return rut_closure_list_add_FIXME(
         &shell->sigchild_closures, sigchild_cb, user_data, destroy_cb);
-#else
-    c_return_val_if_reached(NULL);
-#endif
 }
 
 void
 rut_poll_shell_remove_sigchild(rut_shell_t *shell, rut_closure_t *sigchild)
 {
-#ifdef USE_UV
     rut_closure_disconnect_FIXME(sigchild);
-#else
-    c_return_if_reached();
-#endif
 }
+#endif //RUT_POLL_SUPPORTS_SIGCHILD
 
 #ifdef USE_GLIB
 static void
@@ -808,13 +804,18 @@ rut_android_poll_run(rut_shell_t *shell)
     int backend_fd = uv_backend_fd(loop);
     ALooper *looper = shell->android_application->looper;
 
+    shell->quit = false;
+
+    if (shell->on_run_cb)
+        shell->on_run_cb(shell, shell->on_run_data);
+
     ALooper_addFd(looper, backend_fd, 0, /* ident */
                   ALOOPER_EVENT_INPUT,
                   looper_uv_event_cb,
                   shell);
 
-    shell->quit = false;
     shell->uv_ready = 1;
+    shell->running = true;
 
     while (!shell->quit) {
         int ident;

@@ -456,9 +456,8 @@ exit:
 }
 
 const char *
-magic_lookup_mime_type(int fd)
+magic_lookup_mime_type(FILE *fp)
 {
-    FILE *fp = fdopen(fd, "r");
     magic_section_t *section;
     c_array_t *scratch_array;
 
@@ -467,8 +466,8 @@ magic_lookup_mime_type(int fd)
         initialized = true;
     }
 
-    if (!fp) {
-        c_warning("Failed to open buffered FILE * for detecting mime type");
+    if (c_list_empty(&magic_sections)) {
+        c_warning("No magic sections found to determine mime type with");
         return NULL;
     }
 
@@ -485,8 +484,6 @@ magic_lookup_mime_type(int fd)
     }
 
     c_array_free(scratch_array, true);
-
-    fclose(fp);
     return NULL;
 }
 

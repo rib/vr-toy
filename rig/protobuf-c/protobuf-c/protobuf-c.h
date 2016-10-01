@@ -63,7 +63,7 @@ extern unsigned protobuf_c_minor;
    XXX: should we use stdint.h?
  */
 #ifndef PROTOBUF_C_SKIP_INTTYPES_H
-#  if defined(_MSC_VER)
+#  if 0 //defined(_MSC_VER)
      /* On windows, in ms visual studio, define the types ourselves */
 #    define int32_t      signed __int32
 #    define INT32_MIN    _I32_MIN

@@ -61,7 +61,9 @@ read_write_errno_to_exception_code(int err)
     case EFBIG:
         return RUT_IO_EXCEPTION_BAD_VALUE;
     case ENOSPC:
+#ifdef __linux__
     case EDQUOT:
+#endif
         return RUT_IO_EXCEPTION_NO_SPACE;
     case EIO:
     case EPIPE:

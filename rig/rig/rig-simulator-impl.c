@@ -29,8 +29,11 @@
 #include <rig-config.h>
 
 #include <stdlib.h>
+
+#ifdef __unix__
 #include <sys/socket.h>
 #include <sys/un.h>
+#endif
 
 #include <clib.h>
 
@@ -99,7 +102,7 @@ clear_actions(rig_simulator_t *simulator)
 static rut_object_t *
 simulator_lookup_object(rig_simulator_t *simulator, uint64_t id)
 {
-    return (void *)(intptr_t)id;
+    return (void *)(uintptr_t)id;
 }
 
 static void *
@@ -114,7 +117,7 @@ static uint64_t
 simulator_lookup_object_id(rig_simulator_t *simulator, void *object)
 {
     if (c_hash_table_lookup(simulator->object_registry, object))
-        return (intptr_t)object;
+        return (uintptr_t)object;
     else
         return 0;
 }
@@ -172,7 +175,7 @@ simulator_register_object_cb(void *object, void *user_data)
 
     c_hash_table_insert(simulator->object_registry, object, object);
 
-    return (intptr_t)object;
+    return (uintptr_t)object;
 }
 
 static void
@@ -191,7 +194,7 @@ simulator_unregister_id(rig_simulator_t *simulator, uint64_t id)
      * temporarily_register_object_cb() instead */
     c_return_val_if_fail((id & 0x1) == 0, NULL);
 
-    return (void *)(intptr_t)id;
+    return (void *)(uintptr_t)id;
 }
 #endif
 
@@ -1103,14 +1106,14 @@ rig_simulator_parse_run_mode(const char *option,
         if (strcmp(strv[0], "mainloop") == 0) {
             *mode = RIG_SIMULATOR_RUN_MODE_MAINLOOP;
         } else if (strcmp(strv[0], "thread") == 0) {
-#ifdef C_SUPPORTS_THREADS
+#ifdef RIG_SUPPORT_SIMULATOR_THREAD
             *mode = RIG_SIMULATOR_RUN_MODE_THREADED;
 #else
             c_critical("Platform doesn't support threads");
             goto error;
 #endif
         } else if (strcmp(strv[0], "process") == 0) {
-#ifdef SUPPORT_SIMULATOR_PROCESS
+#ifdef RIG_SUPPORT_SIMULATOR_PROCESS
             *mode = RIG_SIMULATOR_RUN_MODE_PROCESS;
 #else
             c_critical("Platform doesn't support sub-processes");

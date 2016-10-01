@@ -55,7 +55,7 @@ struct _rig_frontend_t {
 
     rig_engine_t *engine;
 
-    pid_t simulator_pid;
+    int simulator_pid;
 
     /* When listening for an out of process simulator
      * to connect (for debugging)...

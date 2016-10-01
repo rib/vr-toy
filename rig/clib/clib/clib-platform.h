@@ -44,6 +44,10 @@
 #  define C_BYTE_ORDER C_LITTLE_ENDIAN
 #endif
 
+#if defined(__GNUC__) || defined(__CLANG__)
+#define C_HAVE_FFS 1
+#endif
+
 #if defined(__unix__) || defined(__APPLE__)
 #  define C_PLATFORM_UNIX	   1
 

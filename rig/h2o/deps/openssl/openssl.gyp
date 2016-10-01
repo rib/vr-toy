@@ -117,7 +117,10 @@
           'includes': ['masm_compile.gypi',],
         }, {
           'defines' : ['<@(openssl_defines_all_non_win)']
-        }]
+        }],
+        ['OS=="win" and _type=="shared_library"', {
+          'defines': [ 'OPENSSL_OPT_WINDLL' ],
+        }],
       ],
       'include_dirs': ['<@(openssl_include_dirs)'],
       'direct_dependent_settings': {

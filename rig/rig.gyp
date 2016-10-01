@@ -20,7 +20,7 @@
   'targets': [
     {
       'target_name': 'freetype',
-      'type': 'static_library',
+      'type': 'shared_library',
       'dependencies': [
         'zlib/zlib.gyp:zlib'
        ],
@@ -46,14 +46,19 @@
               ]
           }]
         ],
-        'libraries': [ '-lz' ],
+#'link_settings': {
+#          'libraries': [ '-lz' ],
+#        }
       },
-      'libraries': [ '-lz' ],
+#      'link_settings': {
+#        'libraries': [ '-lzlib' ],
+#      },
       'defines': [
         '_ALL_SOURCE=1',
         '_GNU_SOURCE=1',
         'FT_CONFIG_CONFIG_H=<ftconfig.h>',
         'FT2_BUILD_LIBRARY',
+        'FT_CONFIG_OPTION_SYSTEM_ZLIB',
       ],
       'sources': [
         'freetype/src/base/ftdebug.c',
@@ -109,6 +114,9 @@
           'include_dirs': [
             'freetype/include/freetype/config'
           ],
+          'sources': [
+            'freetype/src/base/ftsystem.c'
+          ]
         }]
       ]
     },
@@ -141,7 +149,16 @@
         'HAVE_UCDN=1',
       ],
       'conditions': [
-        [ 'OS!="win"', {
+        [ 'OS=="win"', {
+          # GYP 'cflags' are ignore on windows :-/ ...
+          'msvs_settings': {
+            'VCCLCompilerTool': {
+              'AdditionalOptions': [
+                '-FIintrin.h'
+              ]
+            }
+          }
+        },{ # !win
           'defines': [
             '_ALL_SOURCE=1',
             '_GNU_SOURCE=1',
@@ -468,7 +485,15 @@
           ],
           'include_dirs': [
             'fontconfig/win'
-          ]
+          ],
+          'msvs_settings': {
+            'VCCLCompilerTool': {
+                'AdditionalOptions': [
+                    '/FIconfig-fixups.h',
+                    '/FIintrin.h'
+                ]
+            }
+          }
         }]
       ],
       'actions': [
@@ -774,9 +799,11 @@
           ],
         }],
         [ 'OS=="win"', {
-          'libraries': [
-            '-lShlwapi'
-          ]
+          'link_settings': {
+            'libraries': [
+              '-lShlwapi'
+            ]
+          }
         }]
       ]
     },
@@ -875,8 +902,8 @@
         'rut/rut-gaussian-blurrer.c',
         'rut/rut-mesh.h',
         'rut/rut-mesh.c',
-        'rut/rply.c',
-        'rut/rply.h',
+#'rut/rply.c',
+#        'rut/rply.h',
         'rut/rut-mesh-ply.h',
         'rut/rut-mesh-ply.c',
         'rut/rut-graph.h',
@@ -994,7 +1021,24 @@
       'conditions': [
         [ 'OS=="win"', {
           'sources': [
+            'rut/rut-win-shell.h',
+            'rut/rut-win-shell.c'
           ],
+          'include_dirs': [
+            'C:/Users/Robert/local/ffmpeg-cl/include'
+          ],
+          'link_settings': {
+            'libraries': [
+              '-lavcodec.lib',
+              '-lavformat.lib',
+              '-lavutil.lib',
+              '-lswscale.lib',
+              '-lswresample.lib',
+            ],
+            'library_dirs': [
+              'C:/Users/Robert/local/ffmpeg-cl/bin' # HACK
+            ],
+          }
         }, { # Not Windows i.e. POSIX
           'cflags': [
             '-g',
@@ -1062,11 +1106,11 @@
             'rut/rut-x11-shell.c'
           ]
         }],
-        [ 'enable_oculus_rift==1', {
-          'include_dirs': [
-            'LibOVR/Src'
-          ]
-        }],
+#[ 'enable_oculus_rift==1', {
+#          'include_dirs': [
+#            'LibOVR/Src'
+#          ]
+#        }],
         [ 'enable_alsa==1', {
           'defines': [ 'USE_ALSA=1' ],
           'sources': [

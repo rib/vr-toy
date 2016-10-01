@@ -117,11 +117,16 @@ rut_closure_t *rut_poll_shell_add_idle_FIXME(rut_shell_t *shell,
                                              void (*destroy_cb)(void *user_data));
 void rut_poll_shell_remove_idle_FIXME(rut_shell_t *shell, rut_closure_t *idle);
 
+#if !defined(__EMSCRIPTEN___) && defined(C_PLATFORM_UNIX)
+#define RUT_POLL_SUPPORTS_SIGCHILD 1
+#endif
+#ifdef RUT_POLL_SUPPORTS_SIGCHILD
 rut_closure_t *rut_poll_shell_add_sigchild(rut_shell_t *shell,
                                            void (*sigchild_cb)(void *user_data),
                                            void *user_data,
                                            void (*destroy_cb)(void *user_data));
 void rut_poll_shell_remove_sigchild(rut_shell_t *shell, rut_closure_t *sigchild);
+#endif
 
 typedef struct _rut_poll_timer rut_poll_timer_t;
 

@@ -25,6 +25,8 @@
 
 #include <clib.h>
 
+#include <cglib/cg-defines.h>
+
 /* As much as possible we try to avoid depending on build time checks
  * which don't work well for the various cross compiling use cases we
  * want to support...
@@ -35,11 +37,35 @@
 #define CG_HAS_POLL_SUPPORT
 #endif
 
-#ifdef _WIN32
-#define LEAN_AND_MEAN
-#include <windows.h>
-#undef near
-#undef far
-#undef LEAN_AND_MEAN
+#if defined(__GNUC__) || defined(__clang__)
+#define CG_HAVE_FFS 1
+#define ffs __builtin_ffs
+#endif
+
+/* These two builtins are available since GCC 3.4 */
+#if __GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 4)
+#define CG_HAVE_BUILTIN_FFSL
+#define CG_HAVE_BUILTIN_POPCOUNTL
+#define CG_HAVE_BUILTIN_CLZ
+#endif
+
+#if defined(C_PLATFORM_WEB) || defined(C_PLATFORM_DARWIN) || defined(C_PLATFORM_WINDOWS)
+#define CG_HAVE_DIRECTLY_LINKED_GL_LIBRARY
+#endif
+
+#ifdef CG_HAVE_DIRECTLY_LINKED_GL_LIBRARY
+  #ifdef CG_HAS_GL_SUPPORT
+    #define CG_GL_LIBNAME ""
+  #endif
+  #ifdef CG_HAS_GLES2_SUPPORT
+    #define CG_GLES2_LIBNAME ""
+  #endif
+#else
+  #ifdef CG_HAS_GL_SUPPORT
+    #define CG_GL_LIBNAME "libGL.so.1"
+  #endif
+  #ifdef CG_HAS_GLES2_SUPPORT
+    #define CG_GLES2_LIBNAME "libGLESv2.so"
+  #endif
 #endif
 

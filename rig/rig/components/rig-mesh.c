@@ -63,7 +63,7 @@ static rig_property_spec_t _rig_mesh_prop_specs[] = {
       .getter.integer_type = rig_mesh_get_n_vertices,
       .setter.integer_type = rig_mesh_set_n_vertices,
       .flags = RUT_PROPERTY_FLAG_READWRITE |
-          RUT_PROPERTY_FLAG_VALIDATE,
+          RUT_PROPERTY_FLAG_VALIDATE |
           RUT_PROPERTY_FLAG_EXPORT_FRONTEND,
       .validation = { .int_range = { 0, INT_MAX } },
       .animatable = true },
@@ -73,7 +73,7 @@ static rig_property_spec_t _rig_mesh_prop_specs[] = {
       .getter.integer_type = rig_mesh_get_vertices_mode,
       .setter.integer_type = rig_mesh_set_vertices_mode,
       .flags = RUT_PROPERTY_FLAG_READWRITE |
-          RUT_PROPERTY_FLAG_VALIDATE,
+          RUT_PROPERTY_FLAG_VALIDATE |
           RUT_PROPERTY_FLAG_EXPORT_FRONTEND,
       .validation =  { .ui_enum = &vertices_mode_enum },
       .animatable = false },
@@ -83,7 +83,7 @@ static rig_property_spec_t _rig_mesh_prop_specs[] = {
       .getter.object_type = rig_mesh_get_indices,
       .setter.object_type = rig_mesh_set_indices,
       .flags = RUT_PROPERTY_FLAG_READWRITE |
-          RUT_PROPERTY_FLAG_VALIDATE,
+          RUT_PROPERTY_FLAG_VALIDATE |
           RUT_PROPERTY_FLAG_EXPORT_FRONTEND,
       .validation = { .object.type = &rut_buffer_type },
       .animatable = true },
@@ -93,7 +93,7 @@ static rig_property_spec_t _rig_mesh_prop_specs[] = {
       .getter.integer_type = rig_mesh_get_indices_type,
       .setter.integer_type = rig_mesh_set_indices_type,
       .flags = RUT_PROPERTY_FLAG_READWRITE |
-          RUT_PROPERTY_FLAG_VALIDATE,
+          RUT_PROPERTY_FLAG_VALIDATE |
           RUT_PROPERTY_FLAG_EXPORT_FRONTEND,
       .validation =  { .ui_enum = &indices_type_enum },
       .animatable = false },
@@ -103,7 +103,7 @@ static rig_property_spec_t _rig_mesh_prop_specs[] = {
       .getter.integer_type = rig_mesh_get_n_indices,
       .setter.integer_type = rig_mesh_set_n_indices,
       .flags = RUT_PROPERTY_FLAG_READWRITE |
-          RUT_PROPERTY_FLAG_VALIDATE,
+          RUT_PROPERTY_FLAG_VALIDATE |
           RUT_PROPERTY_FLAG_EXPORT_FRONTEND,
       .validation = { .int_range = { 0, INT_MAX } },
       .animatable = true },
@@ -112,7 +112,7 @@ static rig_property_spec_t _rig_mesh_prop_specs[] = {
       .type = RUT_PROPERTY_TYPE_FLOAT,
       .data_offset = offsetof(rig_mesh_t, min_x),
       .flags = RUT_PROPERTY_FLAG_READWRITE |
-          RUT_PROPERTY_FLAG_VALIDATE,
+          RUT_PROPERTY_FLAG_VALIDATE |
           RUT_PROPERTY_FLAG_EXPORT_FRONTEND,
       .validation = { .float_range = { 0, FLT_MAX } },
       .animatable = true },
@@ -121,7 +121,7 @@ static rig_property_spec_t _rig_mesh_prop_specs[] = {
       .type = RUT_PROPERTY_TYPE_FLOAT,
       .data_offset = offsetof(rig_mesh_t, max_x),
       .flags = RUT_PROPERTY_FLAG_READWRITE |
-          RUT_PROPERTY_FLAG_VALIDATE,
+          RUT_PROPERTY_FLAG_VALIDATE |
           RUT_PROPERTY_FLAG_EXPORT_FRONTEND,
       .validation = { .float_range = { 0, FLT_MAX } },
       .animatable = true },
@@ -130,7 +130,7 @@ static rig_property_spec_t _rig_mesh_prop_specs[] = {
       .type = RUT_PROPERTY_TYPE_FLOAT,
       .data_offset = offsetof(rig_mesh_t, min_y),
       .flags = RUT_PROPERTY_FLAG_READWRITE |
-          RUT_PROPERTY_FLAG_VALIDATE,
+          RUT_PROPERTY_FLAG_VALIDATE |
           RUT_PROPERTY_FLAG_EXPORT_FRONTEND,
       .validation = { .float_range = { 0, FLT_MAX } },
       .animatable = true },
@@ -139,7 +139,7 @@ static rig_property_spec_t _rig_mesh_prop_specs[] = {
       .type = RUT_PROPERTY_TYPE_FLOAT,
       .data_offset = offsetof(rig_mesh_t, max_y),
       .flags = RUT_PROPERTY_FLAG_READWRITE |
-          RUT_PROPERTY_FLAG_VALIDATE,
+          RUT_PROPERTY_FLAG_VALIDATE |
           RUT_PROPERTY_FLAG_EXPORT_FRONTEND,
       .validation = { .float_range = { 0, FLT_MAX } },
       .animatable = true },
@@ -148,7 +148,7 @@ static rig_property_spec_t _rig_mesh_prop_specs[] = {
       .type = RUT_PROPERTY_TYPE_FLOAT,
       .data_offset = offsetof(rig_mesh_t, min_z),
       .flags = RUT_PROPERTY_FLAG_READWRITE |
-          RUT_PROPERTY_FLAG_VALIDATE,
+          RUT_PROPERTY_FLAG_VALIDATE |
           RUT_PROPERTY_FLAG_EXPORT_FRONTEND,
       .validation = { .float_range = { 0, FLT_MAX } },
       .animatable = true },
@@ -157,7 +157,7 @@ static rig_property_spec_t _rig_mesh_prop_specs[] = {
       .type = RUT_PROPERTY_TYPE_FLOAT,
       .data_offset = offsetof(rig_mesh_t, max_z),
       .flags = RUT_PROPERTY_FLAG_READWRITE |
-          RUT_PROPERTY_FLAG_VALIDATE,
+          RUT_PROPERTY_FLAG_VALIDATE |
           RUT_PROPERTY_FLAG_EXPORT_FRONTEND,
       .validation = { .float_range = { 0, FLT_MAX } },
       .animatable = true },

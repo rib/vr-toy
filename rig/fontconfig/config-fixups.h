@@ -34,7 +34,6 @@
 #undef ALIGNOF_DOUBLE
 #endif
 
-
 /* just a hack to build the fat binaries:
  * https://bugs.freedesktop.org/show_bug.cgi?id=20208
  */

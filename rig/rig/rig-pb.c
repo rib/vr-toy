@@ -459,11 +459,11 @@ rig_pb_serialize_attributes(rig_pb_serializer_t *serializer,
                             int *n_new_buffers_out)
 {
     Rig__Attribute **pb_attributes = NULL;
-    int64_t *attribute_buffers_id_map = c_alloca(sizeof(int64_t) * n_attributes);
+    uint64_t *attribute_buffers_id_map = c_alloca(sizeof(uint64_t) * n_attributes);
     int n_new_buffers = 0;
 
     for (int i = 0; i < n_attributes; i++) {
-        int64_t buffer_id;
+        uint64_t buffer_id;
 
         if (!attributes[i]->is_buffered)
             continue;
@@ -667,7 +667,7 @@ rig_pb_serialize_component(rig_pb_serializer_t *serializer,
 {
     const rut_type_t *type = rut_object_get_type(component);
     Rig__Entity__Component *pb_component;
-    int component_id;
+    uint64_t component_id;
 
     pb_component = rig_pb_new(
         serializer, Rig__Entity__Component, rig__entity__component__init);
@@ -960,7 +960,7 @@ default_serializer_register_object_cb(void *object,
                                       void *user_data)
 {
     rig_pb_serializer_t *serializer = user_data;
-    void *id_ptr = (void *)(intptr_t)serializer->next_id++;
+    void *id_ptr = (void *)(uintptr_t)serializer->next_id++;
 
     if (!serializer->object_to_id_map) {
         serializer->object_to_id_map =
@@ -975,14 +975,14 @@ default_serializer_register_object_cb(void *object,
 
     c_hash_table_insert(serializer->object_to_id_map, object, id_ptr);
 
-    return (uint64_t)(intptr_t)id_ptr;
+    return (uint64_t)(uintptr_t)id_ptr;
 }
 
 static uint64_t
 serializer_register_pointer_id_object_cb(void *object,
                                          void *user_data)
 {
-    return (uint64_t)(intptr_t)object;
+    return (uint64_t)(uintptr_t)object;
 }
 
 uint64_t
@@ -1005,14 +1005,14 @@ default_serializer_lookup_object_id_cb(void *object, void *user_data)
 
     c_return_val_if_fail(id_ptr, 0);
 
-    return (uint64_t)(intptr_t)id_ptr;
+    return (uint64_t)(uintptr_t)id_ptr;
 }
 
 uint64_t
 serializer_lookup_pointer_object_id_cb(void *object, void *user_data)
 {
     c_return_val_if_fail(object, 0);
-    return (uint64_t)(intptr_t)object;
+    return (uint64_t)(uintptr_t)object;
 }
 
 uint64_t
@@ -2514,13 +2514,13 @@ rig_pb_unserialize_buffers(rig_pb_unserializer_t *unserializer,
         Rig__Buffer *pb_buffer = pb_buffers[i];
         buffers[n_new_buffers] = rig_pb_unserialize_buffer(unserializer, pb_buffer);
         if (!buffers[n_new_buffers])
-            goto ERROR;
+            goto error;
         n_new_buffers++;
     }
 
     return n_buffers;
 
-ERROR:
+error:
     for (int i = 0; i < n_new_buffers; i++) {
         Rig__Buffer *pb_buffer = pb_buffers[i];
         rig_pb_unserializer_unregister_object(unserializer,
@@ -2546,7 +2546,7 @@ rig_pb_unserialize_attributes(rig_pb_unserializer_t *unserializer,
         if (!pb_attribute->name) {
             rig_pb_unserializer_collect_error(unserializer,
                                               "Attribute missing name");
-            goto ERROR;
+            goto error;
         }
 
         if (pb_attribute->has_buffer_id) {
@@ -2556,31 +2556,31 @@ rig_pb_unserialize_attributes(rig_pb_unserializer_t *unserializer,
             if (!pb_attribute->has_stride) {
                 rig_pb_unserializer_collect_error(unserializer,
                                                   "Attribute missing stride");
-                goto ERROR;
+                goto error;
             }
 
             if (!pb_attribute->has_offset) {
                 rig_pb_unserializer_collect_error(unserializer,
                                                   "Attribute missing offset");
-                goto ERROR;
+                goto error;
             }
 
             if (!pb_attribute->has_n_components) {
                 rig_pb_unserializer_collect_error(unserializer,
                                                   "Attribute missing N components");
-                goto ERROR;
+                goto error;
             }
 
             if (!pb_attribute->has_type) {
                 rig_pb_unserializer_collect_error(unserializer, "Attribute missing type");
-                goto ERROR;
+                goto error;
             }
 
             buffer = unserializer_find_object(unserializer, pb_attribute->buffer_id);
             if (!buffer) {
                 rig_pb_unserializer_collect_error(unserializer,
                                                   "Attribute buffer not found");
-                goto ERROR;
+                goto error;
             }
 
             switch (pb_attribute->type) {
@@ -2613,26 +2613,26 @@ rig_pb_unserialize_attributes(rig_pb_unserializer_t *unserializer,
             if (!pb_attribute->has_n_components) {
                 rig_pb_unserializer_collect_error(unserializer,
                                                   "Attribute missing N components");
-                goto ERROR;
+                goto error;
             }
 
             if (!pb_attribute->has_n_columns) {
                 rig_pb_unserializer_collect_error(unserializer,
                                                   "Attribute missing N columns");
-                goto ERROR;
+                goto error;
             }
 
             if (!pb_attribute->has_transpose) {
                 rig_pb_unserializer_collect_error(unserializer,
                                                   "Attribute missing transpose");
-                goto ERROR;
+                goto error;
             }
 
             n_floats = pb_attribute->n_components * pb_attribute->n_columns;
             if (pb_attribute->n_floats != n_floats) {
                 rig_pb_unserializer_collect_error(unserializer,
                                                   "Attribute: Supurious N floats");
-                goto ERROR;
+                goto error;
             }
 
             attributes[i] = rut_attribute_new_const(pb_attribute->name,
@@ -2653,7 +2653,7 @@ rig_pb_unserialize_attributes(rig_pb_unserializer_t *unserializer,
 
     return n_new_attributes;
 
-ERROR:
+error:
 
     for (int i = 0; i < n_new_attributes; i++)
         rut_object_unref(attributes[i]);
@@ -2678,7 +2678,7 @@ rig_pb_unserialize_rut_mesh(rig_pb_unserializer_t *unserializer,
                                                buffers,
                                                pb_mesh->n_buffers);
         if (!n_buffers)
-            goto ERROR;
+            goto error;
     }
 
 
@@ -2688,11 +2688,11 @@ rig_pb_unserialize_rut_mesh(rig_pb_unserializer_t *unserializer,
                                                      attributes,
                                                      pb_mesh->n_attributes);
         if (!n_attributes)
-            goto ERROR;
+            goto error;
     }
 
     if (!pb_mesh->has_mode || !pb_mesh->has_n_vertices)
-        goto ERROR;
+        goto error;
 
     switch (pb_mesh->mode) {
     case RIG__MESH__MODE__POINTS:
@@ -2730,19 +2730,19 @@ rig_pb_unserialize_rut_mesh(rig_pb_unserializer_t *unserializer,
         if (!buffer) {
             rig_pb_unserializer_collect_error(unserializer,
                                               "Failed to lookup indices buffer");
-            goto ERROR;
+            goto error;
         }
 
         if (!pb_mesh->has_indices_type) {
             rig_pb_unserializer_collect_error(unserializer,
                                               "Indices buffer without type");
-            goto ERROR;
+            goto error;
         }
 
         if (!pb_mesh->has_n_indices) {
             rig_pb_unserializer_collect_error(unserializer,
                                               "Indices buffer without count");
-            goto ERROR;
+            goto error;
         }
 
         switch (pb_mesh->indices_type) {
@@ -2770,7 +2770,7 @@ rig_pb_unserialize_rut_mesh(rig_pb_unserializer_t *unserializer,
 
     return mesh;
 
-ERROR:
+error:
 
     rig_pb_unserializer_collect_error(unserializer, "Invalid mesh");
 

@@ -33,15 +33,20 @@
       'zutil.h',
     ],
     'include_dirs': [
-      'zlib',
+      '.',
     ],
     'direct_dependent_settings': {
       'include_dirs': [
-	'zlib',
+	'.',
       ],
     },
     'defines': [
       '_CRT_NONSTDC_NO_DEPRECATE',
     ],
+    'conditions': [
+      ['_type=="shared_library"', {
+          'defines': [ 'ZLIB_DLL' ]
+      }]
+    ]
   }],
 }

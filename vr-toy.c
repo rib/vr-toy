@@ -23,7 +23,8 @@
  */
 
 #include <stdlib.h>
-#include <getopt.h>
+
+#define _USE_MATH_DEFINES
 #include <math.h>
 #include <assert.h>
 
@@ -49,6 +50,12 @@ struct vert {
     float pos[3];
     float s, t;
 };
+
+#ifdef _WIN32
+#define APIEXPORT __declspec(dllexport)
+#else
+#define APIEXPORT
+#endif
 
 static void
 create_mesh(RModule *module)
@@ -162,7 +169,7 @@ create_mesh(RModule *module)
     r_mesh_set_attributes(module, sphere_mesh, attributes, 3);
 }
 
-void
+void APIEXPORT
 vr_toy_load(RModule *module)
 {
     RObject *material = r_material_new(module);
@@ -225,7 +232,8 @@ vr_toy_load(RModule *module)
     r_set_color_by_name(module, material, "specular",
                         r_color_str(module, "#ffffff"));
 
-    video_source = r_source_new(module, "file://test.webm");
+    video_source = r_source_new(module, "file://test.mkv");
+    //video_source = r_source_new(module, "file://test.webm");
     //video_source = r_source_new(module, "file://cat.gif");
     //video_source = r_source_new(module, NULL);
     //r_set_boolean_by_name(module, video_source, "running", true);
@@ -271,7 +279,7 @@ vr_toy_load(RModule *module)
     c_debug("vr_toy_load callback");
 }
 
-void
+void APIEXPORT
 vr_toy_update(RModule *module, RUpdateState *update)
 {
     double delta_seconds = update->progress;
@@ -291,7 +299,7 @@ vr_toy_update(RModule *module, RUpdateState *update)
     c_debug("vr_toy_update callback (delta = %f)", delta_seconds);
 }
 
-void
+void APIEXPORT
 vr_toy_input(RModule *module, RInputEvent *event)
 {
     //c_debug("vr_toy_input callback");
@@ -303,7 +311,7 @@ main(int argc, char **argv)
     r_engine_t *engine;
 
     /* HACK... */
-    setenv("RIG_USE_HMD", "dummy", true);
+    c_setenv("RIG_USE_HMD", "dummy", true);
 
     engine = r_engine_new(&(REngineConfig) { .require_vr_hmd = true });
 

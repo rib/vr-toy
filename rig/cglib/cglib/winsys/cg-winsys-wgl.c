@@ -85,6 +85,7 @@ typedef struct _cg_onscreen_win32_t {
 
 typedef struct _cg_device_wgl_t {
     HDC current_dc;
+    c_hash_table_t *hwnd_to_onscreen_map;
 } cg_device_wgl_t;
 
 typedef struct _cg_onscreen_wgl_t {
@@ -177,7 +178,7 @@ static cg_onscreen_t *
 find_onscreen_for_hwnd(cg_device_t *dev, HWND hwnd)
 {
     cg_display_wgl_t *display_wgl = dev->display->winsys;
-    c_llist_t *l;
+    cg_device_wgl_t *wgl_device = dev->winsys;
 
     /* If the hwnd has CGlib's window class then we can lookup the
        onscreen pointer directly by reading the extra window data */
@@ -188,19 +189,7 @@ find_onscreen_for_hwnd(cg_device_t *dev, HWND hwnd)
             return onscreen;
     }
 
-    for (l = dev->framebuffers; l; l = l->next) {
-        cg_framebuffer_t *framebuffer = l->data;
-
-        if (framebuffer->type == CG_FRAMEBUFFER_TYPE_ONSCREEN) {
-            cg_onscreen_win32_t *win32_onscreen =
-                CG_ONSCREEN(framebuffer)->winsys;
-
-            if (win32_onscreen->hwnd == hwnd)
-                return CG_ONSCREEN(framebuffer);
-        }
-    }
-
-    return NULL;
+    return c_hash_table_lookup(wgl_device->hwnd_to_onscreen_map, hwnd);
 }
 
 static cg_filter_return_t
@@ -214,9 +203,10 @@ win32_event_filter_cb(MSG *msg, void *data)
         if (onscreen) {
             cg_framebuffer_t *framebuffer = CG_FRAMEBUFFER(onscreen);
 
-            /* Ignore size changes resulting from the stage being
-               minimized - otherwise it will think the window has been
-               resized to 0,0 */
+            /* Ignore size changes resulting from the onscreen being
+             * minimized - otherwise it will think the window has been
+             * resized to 0,0
+             */
             if (msg->wParam != SIZE_MINIMIZED) {
                 WORD new_width = LOWORD(msg->lParam);
                 WORD new_height = HIWORD(msg->lParam);
@@ -234,7 +224,8 @@ win32_event_filter_cb(MSG *msg, void *data)
             /* Apparently this removes the dirty region from the window
              * so that it won't be included in the next WM_PAINT
              * message. This is also what SDL does to emit dirty
-             * events */
+             * events
+             */
             ValidateRect(msg->hwnd, &rect);
 
             info.x = rect.left;
@@ -281,11 +272,11 @@ _cg_winsys_renderer_connect(cg_renderer_t *renderer,
          * be using the cg_poll_* functions on non-Unix systems
          * anyway */
         _cg_loop_add_fd(renderer,
-                                 WIN32_MSG_HANDLE,
-                                 CG_POLL_FD_EVENT_IN,
-                                 prepare_messages,
-                                 dispatch_messages,
-                                 renderer);
+                        WIN32_MSG_HANDLE,
+                        CG_POLL_FD_EVENT_IN,
+                        prepare_messages,
+                        dispatch_messages,
+                        renderer);
     }
 
     return true;
@@ -681,10 +672,14 @@ update_winsys_features(cg_device_t *dev, cg_error_t **error)
 static bool
 _cg_winsys_device_init(cg_device_t *dev, cg_error_t **error)
 {
-    dev->winsys = c_new0(cg_device_wgl_t, 1);
+    cg_device_wgl_t *wgl_device = c_new0(cg_device_wgl_t, 1);
+
+    dev->winsys = wgl_device;
 
     cg_win32_renderer_add_filter(dev->display->renderer,
                                  win32_event_filter_cb, dev);
+
+    wgl_device->hwnd_to_onscreen_map = c_hash_table_new(NULL, NULL);
 
     return update_winsys_features(dev, error);
 }
@@ -692,6 +687,11 @@ _cg_winsys_device_init(cg_device_t *dev, cg_error_t **error)
 static void
 _cg_winsys_device_deinit(cg_device_t *dev)
 {
+    cg_device_wgl_t *wgl_device = dev->winsys;
+
+    c_hash_table_destroy(wgl_device->hwnd_to_onscreen_map);
+    wgl_device->hwnd_to_onscreen_map = NULL;
+
     cg_win32_renderer_remove_filter(dev->display->renderer,
                                     win32_event_filter_cb, dev);
 
@@ -703,7 +703,7 @@ _cg_winsys_onscreen_bind(cg_onscreen_t *onscreen)
 {
     cg_framebuffer_t *fb;
     cg_device_t *dev;
-    cg_device_wgl_t *wgl_context;
+    cg_device_wgl_t *wgl_device;
     cg_display_wgl_t *wgl_display;
     cg_onscreen_wgl_t *wgl_onscreen;
     cg_renderer_wgl_t *wgl_renderer;
@@ -716,12 +716,12 @@ _cg_winsys_onscreen_bind(cg_onscreen_t *onscreen)
 
     fb = CG_FRAMEBUFFER(onscreen);
     dev = fb->dev;
-    wgl_context = dev->winsys;
+    wgl_device = dev->winsys;
     wgl_display = dev->display->winsys;
     wgl_onscreen = onscreen->winsys;
     wgl_renderer = dev->display->renderer->winsys;
 
-    if (wgl_context->current_dc == wgl_onscreen->client_dc)
+    if (wgl_device->current_dc == wgl_onscreen->client_dc)
         return;
 
     wglMakeCurrent(wgl_onscreen->client_dc, wgl_display->wgl_context);
@@ -737,14 +737,14 @@ _cg_winsys_onscreen_bind(cg_onscreen_t *onscreen)
             wgl_renderer->pf_wglSwapInterval(0);
     }
 
-    wgl_context->current_dc = wgl_onscreen->client_dc;
+    wgl_device->current_dc = wgl_onscreen->client_dc;
 }
 
 static void
 _cg_winsys_onscreen_deinit(cg_onscreen_t *onscreen)
 {
     cg_device_t *dev = CG_FRAMEBUFFER(onscreen)->dev;
-    cg_device_wgl_t *wgl_context = dev->winsys;
+    cg_device_wgl_t *wgl_device = dev->winsys;
     cg_onscreen_win32_t *win32_onscreen = onscreen->winsys;
     cg_onscreen_wgl_t *wgl_onscreen = onscreen->winsys;
 
@@ -753,17 +753,22 @@ _cg_winsys_onscreen_deinit(cg_onscreen_t *onscreen)
         return;
 
     if (wgl_onscreen->client_dc) {
-        if (wgl_context->current_dc == wgl_onscreen->client_dc)
+        if (wgl_device->current_dc == wgl_onscreen->client_dc)
             _cg_winsys_onscreen_bind(NULL);
 
         ReleaseDC(win32_onscreen->hwnd, wgl_onscreen->client_dc);
     }
 
-    if (!win32_onscreen->is_foreign_hwnd && win32_onscreen->hwnd) {
-        /* Drop the pointer to the onscreen in the window so that any
-           further messages won't be processed */
-        SetWindowLongPtrW(win32_onscreen->hwnd, 0, (LONG_PTR)0);
-        DestroyWindow(win32_onscreen->hwnd);
+    if (win32_onscreen->hwnd) {
+        c_hash_table_remove(wgl_device->hwnd_to_onscreen_map,
+                            win32_onscreen->hwnd);
+
+        if (!win32_onscreen->is_foreign_hwnd) {
+            /* Drop the pointer to the onscreen in the window so that any
+               further messages won't be processed */
+            SetWindowLongPtrW(win32_onscreen->hwnd, 0, (LONG_PTR)0);
+            DestroyWindow(win32_onscreen->hwnd);
+        }
     }
 
     c_slice_free(cg_onscreen_wgl_t, onscreen->winsys);
@@ -776,6 +781,7 @@ _cg_winsys_onscreen_init(cg_onscreen_t *onscreen,
 {
     cg_framebuffer_t *framebuffer = CG_FRAMEBUFFER(onscreen);
     cg_device_t *dev = framebuffer->dev;
+    cg_device_wgl_t *wgl_device = dev->winsys;
     cg_display_t *display = dev->display;
     cg_display_wgl_t *wgl_display = display->winsys;
     cg_onscreen_wgl_t *wgl_onscreen;
@@ -835,6 +841,10 @@ _cg_winsys_onscreen_init(cg_onscreen_t *onscreen,
         SetWindowLongPtrW(hwnd, 0, (LONG_PTR)onscreen);
     }
 
+    c_hash_table_insert(wgl_device->hwnd_to_onscreen_map,
+                        hwnd,
+                        onscreen);
+
     onscreen->winsys = c_slice_new0(cg_onscreen_wgl_t);
     win32_onscreen = onscreen->winsys;
     wgl_onscreen = onscreen->winsys;
@@ -844,8 +854,8 @@ _cg_winsys_onscreen_init(cg_onscreen_t *onscreen,
     wgl_onscreen->client_dc = GetDC(hwnd);
 
     /* Use the same pixel format as the dummy DC from the renderer */
-    pf = choose_pixel_format(
-        &framebuffer->config, wgl_onscreen->client_dc, &pfd);
+    pf = choose_pixel_format(&framebuffer->config,
+                             wgl_onscreen->client_dc, &pfd);
 
     if (pf == 0 || !SetPixelFormat(wgl_onscreen->client_dc, pf, &pfd)) {
         _cg_set_error(error,
@@ -862,8 +872,9 @@ _cg_winsys_onscreen_init(cg_onscreen_t *onscreen,
 }
 
 static void
-_cg_winsys_onscreen_swap_buffers_with_damage(
-    cg_onscreen_t *onscreen, const int *rectangles, int n_rectangles)
+_cg_winsys_onscreen_swap_buffers_with_damage(cg_onscreen_t *onscreen,
+                                             const int *rectangles,
+                                             int n_rectangles)
 {
     cg_onscreen_wgl_t *wgl_onscreen = onscreen->winsys;
 
@@ -874,14 +885,14 @@ static void
 _cg_winsys_onscreen_update_swap_throttled(cg_onscreen_t *onscreen)
 {
     cg_device_t *dev = CG_FRAMEBUFFER(onscreen)->dev;
-    cg_device_wgl_t *wgl_context = dev->winsys;
+    cg_device_wgl_t *wgl_device = dev->winsys;
     cg_onscreen_wgl_t *wgl_onscreen = onscreen->winsys;
 
-    if (wgl_context->current_dc != wgl_onscreen->client_dc)
+    if (wgl_device->current_dc != wgl_onscreen->client_dc)
         return;
 
     /* This will cause it to rebind the context and update the swap interval */
-    wgl_context->current_dc = NULL;
+    wgl_device->current_dc = NULL;
     _cg_winsys_onscreen_bind(onscreen);
 }
 
@@ -938,4 +949,14 @@ _cg_winsys_wgl_get_vtable(void)
     }
 
     return &vtable;
+}
+
+void
+cg_win32_onscreen_update_size(cg_onscreen_t *onscreen,
+                              int width,
+                              int height)
+{
+    cg_framebuffer_t *fb = CG_FRAMEBUFFER(onscreen);
+
+    _cg_framebuffer_winsys_update_size(fb, width, height);
 }

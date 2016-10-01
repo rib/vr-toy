@@ -29,13 +29,16 @@
 #include <rig-config.h>
 
 #include <stdlib.h>
-#include <sys/socket.h>
 
 #ifdef __linux__
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <sys/wait.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #endif
 
 #ifdef __EMSCRIPTEN__
@@ -47,11 +50,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #endif
-
-#include <sys/wait.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
 
 #ifdef USE_FFMPEG
 #include <libavcodec/avcodec.h>
@@ -734,7 +732,7 @@ fork_simulator(rig_frontend_t *frontend,
 }
 #endif /* RIG_SUPPORT_SIMULATOR_PROCESS */
 
-#ifdef C_SUPPORTS_THREADS
+#ifdef RIG_SUPPORT_SIMULATOR_THREAD
 
 typedef struct _thread_state_t {
 #ifdef C_HAVE_PTHREADS
@@ -869,7 +867,7 @@ create_simulator_thread(rig_frontend_t *frontend,
     return state;
 }
 
-#endif /* C_SUPPORTS_THREADS */
+#endif /* RIG_SUPPORT_SIMULATOR_THREAD */
 
 #ifdef __linux__
 static void
@@ -1142,7 +1140,7 @@ rig_frontend_spawn_simulator(rig_frontend_t *frontend,
                                  local_sim_init_cb, local_sim_init_data,
                                  ui_filename);
         break;
-#ifdef C_SUPPORTS_THREADS
+#ifdef RIG_SUPPORT_SIMULATOR_THREAD
     case RIG_SIMULATOR_RUN_MODE_THREADED:
         create_simulator_thread(frontend,
                                 local_sim_init_cb, local_sim_init_data,

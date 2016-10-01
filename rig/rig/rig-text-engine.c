@@ -31,7 +31,7 @@
 
 #ifdef __ANDROID__
 #include <android/asset_manager.h>
-#else
+#elif defined(__unix__)
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -1856,7 +1856,9 @@ icu_common_entry_free_cb(void *data)
 {
     struct icu_common_entry *entry = data;
 
+#if !defined(__ANDROID__) && defined(__unix__)
     munmap((void *)entry->header, entry->len);
+#endif
 
     c_slice_free(struct icu_common_entry, entry);
 }
@@ -1882,7 +1884,7 @@ android_asset_manager_open(rig_text_engine_state_t *state,
     return common_data;
 }
 
-#else /* __ANDROID__ */
+#elif defined(__unix__)
 
 static void *
 mmap_open(const char *filename)
@@ -1915,7 +1917,7 @@ error:
 
     return NULL;
 }
-#endif /* __ANDROID__ */
+#endif
 
 static const void *
 open_icu_common_data(rig_text_engine_state_t *state,
@@ -1932,8 +1934,10 @@ open_icu_common_data(rig_text_engine_state_t *state,
 
 #ifdef __ANDROID__
     common_header = android_asset_manager_open(state, filename);
-#else
+#elif defined(__unix__)
     common_header = mmap_open(filename);
+#else
+#warning "Missing platform support for opneing ICU common data"
 #endif
 
     common_entry = c_slice_new(struct icu_common_entry);

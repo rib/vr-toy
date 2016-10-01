@@ -193,6 +193,20 @@ void cg_win32_onscreen_set_foreign_window(cg_onscreen_t *onscreen, HWND hwnd);
  * Stability: unstable
  */
 HWND cg_win32_onscreen_get_window(cg_onscreen_t *onscreen);
+
+/**
+ * cg_win32_onscreen_update_size:
+ * @onscreen: A #cg_onscreen_t framebuffer
+ *
+ * Notify CGlib that the onscreen framebuffer has changed size if the
+ * framebuffer was allocated with a foreign HWND and if CGlib event
+ * retrieval has been disabled via
+ * cg_win32_renderer_set_event_retrieval_enabled()
+ */
+void cg_win32_onscreen_update_size(cg_onscreen_t *onscreen,
+                                   int width,
+                                   int height);
+
 #endif /* CG_HAS_WIN32_SUPPORT */
 
 #if defined(CG_HAS_EGL_PLATFORM_WAYLAND_SUPPORT)

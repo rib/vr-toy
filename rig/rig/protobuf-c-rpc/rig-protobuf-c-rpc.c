@@ -1,20 +1,8 @@
 #include <rig-config.h>
 
 #include <string.h>
-#include <assert.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <netinet/in.h>
-#include <netdb.h>
 #include <stdarg.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <netinet/in.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <clib.h>
 
 #include <rut.h>

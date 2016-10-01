@@ -229,7 +229,7 @@ compare_weights_cb(const void *a, const void *b)
 }
 
 /* Things seem pretty ugly here as we're  */
-const char *
+static const char *
 lookup_mime_type_case_sensitive(const char *filename,
                                 bool *needs_magic)
 {
@@ -239,6 +239,12 @@ lookup_mime_type_case_sensitive(const char *filename,
     glob_t *entry;
     const char *extension;
     c_llist_t *l;
+
+    if (literals == NULL) {
+        /* No glob files added */
+        c_warning("No glob data to lookup mime type with");
+        return NULL;
+    }
 
     /* Note: we're currently ignoring weights if we match a literal,
      * hopefully that's ok? */
@@ -326,7 +332,7 @@ glob_lookup_mime_type(const char *filename,
     if (ext[0] == '\0')
         base = fname;
     else
-        snprintf(base, len + 1, "%s.%s", fname, ext);
+        snprintf(base, len + 1, "%s%s", fname, ext);
 #else
     char *copy = alloca(len + 1);
     char *base;

@@ -61,6 +61,9 @@
 #ifdef USE_X11
 #include "rut-x11-shell.h"
 #endif
+#ifdef C_PLATFORM_WINDOWS
+#include "rut-win-shell.h"
+#endif
 #ifdef __EMSCRIPTEN__
 #include "rut-emscripten-shell.h"
 #endif
@@ -555,6 +558,8 @@ _rut_shell_init(rut_shell_t *shell)
 
 #ifdef USE_SDL
         rut_sdl_shell_init(shell);
+#elif defined(C_PLATFORM_WINDOWS)
+        rut_win_shell_init(shell);
 #elif defined(USE_X11)
         rut_x11_shell_init(shell);
 #elif defined(__ANDROID__)
@@ -1444,41 +1449,10 @@ rut_shell_set_assets_location(rut_shell_t *shell,
     shell->assets_location = c_strdup(assets_location);
 }
 
-static const char *const *
-get_system_data_dirs(void)
-{
-#ifdef USE_GLIB
-    return g_get_system_data_dirs();
-#elif defined(__linux__) && !defined(__ANDROID__)
-    static char **dirs = NULL;
-    if (!dirs) {
-        const char *dirs_var = getenv("XDG_DATA_DIRS");
-        if (dirs_var)
-            dirs = c_strsplit(dirs_var, C_SEARCHPATH_SEPARATOR_S, -1);
-        else
-            dirs = c_malloc0(sizeof(void *));
-    }
-    return (const char *const *)dirs;
-#elif defined (__ANDROID__)
-    static const char *dirs[] = {
-        "/data",
-        NULL
-    };
-    return dirs;
-#elif defined(__EMSCRIPTEN__)
-    static const char *dirs[] = {
-        NULL,
-    };
-    return dirs;
-#else
-#error "FIXME: Missing platform specific code to locate system data directories"
-#endif
-}
-
 char *
 rut_find_data_file(const char *base_filename)
 {
-    const char *const *dirs = get_system_data_dirs();
+    const char *const *dirs = c_get_xdg_data_dirs();
     const char *const *dir;
 
     for (dir = dirs; *dir; dir++) {

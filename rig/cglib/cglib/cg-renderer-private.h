@@ -82,7 +82,7 @@ struct _cg_renderer_t {
     cg_driver_t driver;
     unsigned long private_features
     [CG_FLAGS_N_LONGS_FOR_SIZE(CG_N_PRIVATE_FEATURES)];
-#ifndef HAVE_DIRECTLY_LINKED_GL_LIBRARY
+#ifndef CG_HAVE_DIRECTLY_LINKED_GL_LIBRARY
     c_module_t *libgl_module;
 #endif
 

@@ -31,14 +31,17 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <unistd.h>
 #include <fcntl.h>
+#ifdef __unix__
+#include <unistd.h>
 #include <sys/mman.h>
+#endif
 
 #include "rig.pb-c.h"
 #include "rig-engine.h"
 #include "rig-pb.h"
 
+#ifdef RIG_EDITOR_ENABLED
 typedef struct _buffered_file_t {
     ProtobufCBuffer base;
     FILE *fp;
@@ -100,6 +103,7 @@ rig_save(rig_engine_t *engine, rig_ui_t *ui, const char *path)
 
     fclose(fp);
 }
+#endif /* EDITOR_ENABLED */
 
 static void
 ignore_free(void *allocator_data, void *ptr)
@@ -154,12 +158,14 @@ unserializer_lookup_object_cb(rig_ui_t *ui, uint64_t id, void *user_data)
 rig_ui_t *
 rig_load(rig_engine_t *engine, const char *file)
 {
-    struct stat sb;
-    int fd;
     uint8_t *contents;
     size_t len;
     c_error_t *error = NULL;
+#ifdef __unix__
+    struct stat sb;
+    int fd;
     bool needs_munmap = false;
+#endif
     rig_pb_unserializer_t *unserializer;
     Rig__UI *pb_ui;
     rig_ui_t *ui;
@@ -179,12 +185,15 @@ rig_load(rig_engine_t *engine, const char *file)
         engine->frame_stack /* allocator_data */
     };
 
+#ifdef __unix__
     fd = open(file, O_CLOEXEC);
     if (fd > 0 && fstat(fd, &sb) == 0 &&
         (contents = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0))) {
         len = sb.st_size;
         needs_munmap = true;
-    } else if (!c_file_get_contents(file, (char **)&contents, &len, &error)) {
+    } else
+#endif
+    if (!c_file_get_contents(file, (char **)&contents, &len, &error)) {
         c_warning("Failed to load ui description: %s", error->message);
         c_error_free(error);
         return NULL;
@@ -202,10 +211,15 @@ rig_load(rig_engine_t *engine, const char *file)
 
     rig__ui__free_unpacked(pb_ui, &protobuf_c_allocator);
 
-    if (needs_munmap)
+#ifdef __unix__
+    if (needs_munmap) {
         munmap(contents, len);
-    else
+        close(fd);
+    } else
+#endif
+    {
         c_free(contents);
+    }
 
     rig_pb_unserializer_destroy(unserializer);
 

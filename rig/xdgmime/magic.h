@@ -25,7 +25,7 @@
 #define _MAGIC_H_
 
 bool magic_add_file(const char *magicpath);
-const char *magic_lookup_mime_type(int fd);
+const char *magic_lookup_mime_type(FILE *fp);
 void magic_cleanup(void);
 
 #endif	/* _MAGIC_H_ */

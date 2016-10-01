@@ -339,8 +339,8 @@ rig_camera_get_projection(rut_object_t *object)
                                        camera->props.base.ortho.y1,
                                        camera->props.base.ortho.x2,
                                        camera->props.base.ortho.y2,
-                                       camera->props.base.near,
-                                       camera->props.base.far);
+                                       camera->props.base.z_near,
+                                       camera->props.base.z_far);
 
                 break;
             }
@@ -351,14 +351,14 @@ rig_camera_get_projection(rut_object_t *object)
                 rut_util_matrix_scaled_perspective(&camera->props.projection,
                                                    camera->props.base.perspective.fov,
                                                    aspect_ratio,
-                                                   camera->props.base.near,
-                                                   camera->props.base.far,
+                                                   camera->props.base.z_near,
+                                                   camera->props.base.z_far,
                                                    camera->props.base.zoom);
 #if 0
                 c_debug ("fov=%f, aspect=%f, near=%f, far=%f, zoom=%f\n",
                          camera->props.base.perspective.fov,
                          aspect_ratio,
-                         camera->props.base.near,
+                         camera->props.base.z_near,
                          camera->props.base.far,
                          camera->props.base.zoom);
 #endif
@@ -368,11 +368,11 @@ rig_camera_get_projection(rut_object_t *object)
         case RUT_PROJECTION_ASYMMETRIC_PERSPECTIVE:
             {
 #define D_TO_R(X) (X *(C_PI / 180.0f))
-                float near = camera->props.base.near;
-                float left = -tanf(D_TO_R(camera->props.base.asymmetric_perspective.left_fov)) * near;
-                float right = tanf(D_TO_R(camera->props.base.asymmetric_perspective.right_fov)) * near;
-                float bottom = -tanf(D_TO_R(camera->props.base.asymmetric_perspective.bottom_fov)) * near;
-                float top = tanf(D_TO_R(camera->props.base.asymmetric_perspective.top_fov)) * near;
+                float z_near = camera->props.base.z_near;
+                float left = -tanf(D_TO_R(camera->props.base.asymmetric_perspective.left_fov)) * z_near;
+                float right = tanf(D_TO_R(camera->props.base.asymmetric_perspective.right_fov)) * z_near;
+                float bottom = -tanf(D_TO_R(camera->props.base.asymmetric_perspective.bottom_fov)) * z_near;
+                float top = tanf(D_TO_R(camera->props.base.asymmetric_perspective.top_fov)) * z_near;
 #undef D_TO_R
 
                 rut_util_matrix_scaled_frustum(&camera->props.projection,
@@ -380,8 +380,8 @@ rig_camera_get_projection(rut_object_t *object)
                                                right,
                                                bottom,
                                                top,
-                                               camera->props.base.near,
-                                               camera->props.base.far,
+                                               camera->props.base.z_near,
+                                               camera->props.base.z_far,
                                                camera->props.base.zoom);
                 break;
             }
@@ -399,15 +399,15 @@ rig_camera_get_projection(rut_object_t *object)
 }
 
 void
-rig_camera_set_near_plane(rut_object_t *obj, float near)
+rig_camera_set_near_plane(rut_object_t *obj, float z_near)
 {
     rig_camera_t *camera = obj;
     rig_property_context_t *prop_ctx;
 
-    if (camera->props.base.near == near)
+    if (camera->props.base.z_near == z_near)
         return;
 
-    camera->props.base.near = near;
+    camera->props.base.z_near = z_near;
 
     prop_ctx = rig_component_props_get_property_context(&camera->component);
     rig_property_dirty(prop_ctx, &camera->properties[RIG_CAMERA_PROP_NEAR]);
@@ -421,19 +421,19 @@ rig_camera_get_near_plane(rut_object_t *obj)
 {
     rig_camera_t *camera = obj;
 
-    return camera->props.base.near;
+    return camera->props.base.z_near;
 }
 
 void
-rig_camera_set_far_plane(rut_object_t *obj, float far)
+rig_camera_set_far_plane(rut_object_t *obj, float z_far)
 {
     rig_camera_t *camera = obj;
     rig_property_context_t *prop_ctx;
 
-    if (camera->props.base.far == far)
+    if (camera->props.base.z_far == z_far)
         return;
 
-    camera->props.base.far = far;
+    camera->props.base.z_far = z_far;
 
     prop_ctx = rig_component_props_get_property_context(&camera->component);
     rig_property_dirty(prop_ctx, &camera->properties[RIG_CAMERA_PROP_FAR]);
@@ -447,7 +447,7 @@ rig_camera_get_far_plane(rut_object_t *obj)
 {
     rig_camera_t *camera = obj;
 
-    return camera->props.base.far;
+    return camera->props.base.z_far;
 }
 
 rut_projection_t
@@ -1248,8 +1248,8 @@ rig_camera_new(rig_engine_t *engine,
     camera->props.base.viewport[2] = width;
     camera->props.base.viewport[3] = height;
 
-    camera->props.base.near = -1;
-    camera->props.base.far = 100;
+    camera->props.base.z_near = -1;
+    camera->props.base.z_far = 100;
 
     camera->props.base.zoom = 1;
 

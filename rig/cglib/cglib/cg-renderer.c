@@ -216,7 +216,7 @@ _cg_renderer_free(cg_renderer_t *renderer)
     if (winsys)
         winsys->renderer_disconnect(renderer);
 
-#ifndef HAVE_DIRECTLY_LINKED_GL_LIBRARY
+#ifndef CG_HAVE_DIRECTLY_LINKED_GL_LIBRARY
     if (renderer->libgl_module)
         c_module_close(renderer->libgl_module);
 #endif
@@ -521,7 +521,7 @@ _cg_renderer_choose_driver(cg_renderer_t *renderer,
         CG_FLAGS_SET(
             renderer->private_features, desc->private_features[i], true);
 
-#ifndef HAVE_DIRECTLY_LINKED_GL_LIBRARY
+#ifndef CG_HAVE_DIRECTLY_LINKED_GL_LIBRARY
 
     if (CG_FLAGS_GET(renderer->private_features, CG_PRIVATE_FEATURE_ANY_GL)) {
         renderer->libgl_module = c_module_open(libgl_name);
@@ -536,7 +536,7 @@ _cg_renderer_choose_driver(cg_renderer_t *renderer,
         }
     }
 
-#endif /* HAVE_DIRECTLY_LINKED_GL_LIBRARY */
+#endif /* CG_HAVE_DIRECTLY_LINKED_GL_LIBRARY */
 
     return true;
 }

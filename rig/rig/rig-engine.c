@@ -31,11 +31,7 @@
 #include <sys/stat.h>
 #include <math.h>
 #include <sys/types.h>
-#include <unistd.h>
 #include <stdlib.h>
-
-#include <sys/socket.h>
-#include <sys/un.h>
 
 #include <clib.h>
 

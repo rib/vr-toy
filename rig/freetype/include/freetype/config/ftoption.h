@@ -185,7 +185,7 @@ FT_BEGIN_HEADER
   /*   Do not #undef this macro here since the build system might define   */
   /*   it for certain configurations only.                                 */
   /*                                                                       */
-/* #define FT_CONFIG_OPTION_SYSTEM_ZLIB */
+#define FT_CONFIG_OPTION_SYSTEM_ZLIB
 
 
   /*************************************************************************/
@@ -226,8 +226,10 @@ FT_BEGIN_HEADER
   /*   Do not #undef these macros here since the build system might define */
   /*   them for certain configurations only.                               */
   /*                                                                       */
-/* #define FT_EXPORT(x)      extern x */
-/* #define FT_EXPORT_DEF(x)  x */
+#ifdef _WIN32
+#define FT_EXPORT(x)       __declspec(dllexport) x
+#define FT_EXPORT_DEF(x)   __declspec(dllexport) x
+#endif
 
 
   /*************************************************************************/

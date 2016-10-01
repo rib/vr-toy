@@ -157,6 +157,11 @@ typedef struct {
             int64_t last_sync_request_value;
         } x11;
 #endif
+#ifdef _WIN32
+        struct {
+            HWND hwnd;
+        } win;
+#endif
         int dummy;
     };
 
@@ -403,18 +408,26 @@ struct _rut_shell_t {
 #endif
 #endif
 
-#ifdef USE_ALSA
-    snd_pcm_uframes_t pcm_period_n_frames;
-    snd_pcm_uframes_t pcm_buffer_n_frames;
+#ifdef _WIN32
+    struct {
+        ATOM window_class;
+        uv_thread_t ui_thread;
+    } win;
+#endif
+
     unsigned int pcm_freq;
-    snd_pcm_t *pcm;
+    rut_channel_layout_t *pcm_channel_layouts;
+    int pcm_n_channels;
+    int pcm_period_n_frames;
+    int pcm_buffer_n_frames;
     uint8_t *pcm_buf;
+
+#ifdef USE_ALSA
+    snd_pcm_t *pcm;
     struct pollfd *pcm_pollfds;
     rut_poll_source_t **pcm_event_sources;
     int pcm_n_pollfds;
     snd_pcm_status_t *pcm_status;
-    rut_channel_layout_t *pcm_channel_layouts;
-    int pcm_n_channels;
 #endif
 
     c_mutex_t pcm_chunk_mutex;

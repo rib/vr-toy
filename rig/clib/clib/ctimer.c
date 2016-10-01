@@ -42,16 +42,14 @@ static double qpc_scale;
 static double mach_abs_time_scale;
 #endif
 
+static c_once_t init_scale = C_ONCE_INIT;
 
 struct _c_timer_t {
     int64_t start, stop;
 };
 
-c_timer_t *
-c_timer_new(void)
+static void _init_scale(void)
 {
-    c_timer_t *timer;
-
 #ifdef WIN32
     if (!qpc_scale) {
         LARGE_INTEGER li;
@@ -61,12 +59,23 @@ c_timer_new(void)
     }
 #endif
 #ifdef __APPLE__
+    c_once(&init_scale, _init_scale);
     if (!mach_abs_time_scale) {
         mach_timebase_info_data_t timebase;
 
         mach_timebase_info(&timebase);
         mach_abs_time_scale = timebase.numer / timebase.denom;
     }
+#endif
+}
+
+c_timer_t *
+c_timer_new(void)
+{
+    c_timer_t *timer;
+
+#if defined(_WIN32) || defined(__APPLE__)
+    c_once(&init_scale, _init_scale);
 #endif
 
     timer = c_slice_new(c_timer_t);
@@ -89,6 +98,8 @@ c_get_monotonic_time(void)
     int64_t ret;
 
 #ifdef __APPLE__
+    c_once(&init_scale, _init_scale);
+
     ret = mach_absolute_time() * mach_abs_time_scale;
 #elif defined(C_PLATFORM_UNIX)
     struct timespec ts;
@@ -97,6 +108,8 @@ c_get_monotonic_time(void)
     ret = (ts.tv_sec * 1e9) + ts.tv_nsec;
 #elif defined(WIN32)
     LARGE_INTEGER li;
+
+    c_once(&init_scale, _init_scale);
 
     QueryPerformanceCounter(&li);
     ret = li.QuadPart * qpc_scale;

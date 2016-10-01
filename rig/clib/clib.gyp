@@ -136,7 +136,8 @@
               '-liphlpapi',
               '-lpsapi',
               '-lshell32',
-              '-lws2_32'
+              '-lws2_32',
+              '-ldbghelp',
             ],
           },
         }, { # Not Windows i.e. POSIX

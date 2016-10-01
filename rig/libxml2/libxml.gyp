@@ -131,13 +131,6 @@
 	'xpath.c',
 	'xpointer.c',
       ],
-      'defines': [
-	# Define LIBXML_STATIC as nothing to match how libxml.h
-	# (an internal header) defines LIBXML_STATIC, otherwise
-	# we get the macro redefined warning from GCC.  (-DFOO
-	# defines the macro FOO as 1.)
-	'LIBXML_STATIC=',
-      ],
       'include_dirs': [
 	'<(os_include)',
 	'<(os_include)/include',
@@ -148,15 +141,19 @@
 	#'../zlib/zlib.gyp:zlib',
       ],
       'direct_dependent_settings': {
-	'defines': [
-	  'LIBXML_STATIC',
-	],
 	'include_dirs': [
 	  '<(os_include)/include',
 	  'include',
 	],
       },
       'conditions': [
+        ['_type=="static_library"', {
+            'direct_dependent_settings': {
+                'defines': [
+                  'LIBXML_STATIC',
+                ],
+            }
+        }],
 	['OS=="linux"', {
 	  'link_settings': {
 	    'libraries': [

@@ -130,7 +130,7 @@ static rig_property_spec_t _rig_material_prop_specs[] = {
       .getter.float_type = rig_material_get_shininess,
       .setter.float_type = rig_material_set_shininess,
       .flags = RUT_PROPERTY_FLAG_READWRITE |
-          RUT_PROPERTY_FLAG_VALIDATE,
+          RUT_PROPERTY_FLAG_VALIDATE |
           RUT_PROPERTY_FLAG_EXPORT_FRONTEND,
       .validation = { .float_range = { 0, 1000 } },
       .animatable = true },
@@ -140,7 +140,7 @@ static rig_property_spec_t _rig_material_prop_specs[] = {
       .getter.float_type = rig_material_get_alpha_mask_threshold,
       .setter.float_type = rig_material_set_alpha_mask_threshold,
       .flags = RUT_PROPERTY_FLAG_READWRITE |
-          RUT_PROPERTY_FLAG_VALIDATE,
+          RUT_PROPERTY_FLAG_VALIDATE |
           RUT_PROPERTY_FLAG_EXPORT_FRONTEND,
       .validation = { .float_range = { 0, 1 } },
       .animatable = true },

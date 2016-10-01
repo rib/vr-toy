@@ -39,7 +39,7 @@
 #include "components/rig-mesh.h"
 
 #define apply_id_to_object(ctx, id) ((void *)(uintptr_t)(id))
-#define op_object_to_id(serializer, obj) ((intptr_t)obj)
+#define op_object_to_id(serializer, obj) ((uintptr_t)obj)
 
 #if 0
 #define apply_id_to_object(ctx, id) ctx->id_to_object(id, ctx->user_data)
@@ -51,13 +51,13 @@
 #endif
 
 static bool
-map_ids(rig_engine_op_map_context_t *ctx, int64_t **id_ptrs)
+map_ids(rig_engine_op_map_context_t *ctx, uint64_t **id_ptrs)
 {
     void *user_data = ctx->user_data;
     int i;
 
     for (i = 0; id_ptrs[i]; i++) {
-        int64_t *id_ptr = id_ptrs[i];
+        uint64_t *id_ptr = id_ptrs[i];
         *id_ptr = ctx->map_id_cb(*id_ptr, user_data);
         if (!*id_ptr)
             return false;
@@ -67,7 +67,7 @@ map_ids(rig_engine_op_map_context_t *ctx, int64_t **id_ptrs)
 }
 
 static bool
-map_id(rig_engine_op_map_context_t *ctx, int64_t *id_ptr)
+map_id(rig_engine_op_map_context_t *ctx, uint64_t *id_ptr)
 {
     *id_ptr = ctx->map_id_cb(*id_ptr, ctx->user_data);
     if (!*id_ptr)
@@ -382,7 +382,7 @@ _map_op_add_entity(rig_engine_op_map_context_t *ctx,
                    rig_engine_op_apply_context_t *apply_ctx,
                    Rig__Operation *pb_op)
 {
-    int64_t *parent_id_addr = &pb_op->add_entity->parent_entity_id;
+    uint64_t *parent_id_addr = &pb_op->add_entity->parent_entity_id;
 
     /* XXX: A parent ID of zero is allowed for a root node */
     if (*parent_id_addr && !map_id(ctx, parent_id_addr))
@@ -883,8 +883,8 @@ _map_op_controller_set_const(rig_engine_op_map_context_t *ctx,
                              rig_engine_op_apply_context_t *apply_ctx,
                              Rig__Operation *pb_op)
 {
-    int64_t *id_ptrs[] = { &pb_op->controller_set_const->object_id,
-                           &pb_op->controller_set_const->controller_id, NULL };
+    uint64_t *id_ptrs[] = { &pb_op->controller_set_const->object_id,
+                            &pb_op->controller_set_const->controller_id, NULL };
 
     if (!map_ids(ctx, id_ptrs))
         return false;
@@ -987,8 +987,8 @@ _map_op_controller_path_add_node(rig_engine_op_map_context_t *ctx,
                                  rig_engine_op_apply_context_t *apply_ctx,
                                  Rig__Operation *pb_op)
 {
-    int64_t *id_ptrs[] = { &pb_op->controller_path_add_node->object_id,
-                           &pb_op->controller_path_add_node->controller_id,
+    uint64_t *id_ptrs[] = { &pb_op->controller_path_add_node->object_id,
+                            &pb_op->controller_path_add_node->controller_id,
                            NULL };
 
     if (!map_ids(ctx, id_ptrs))
@@ -1079,9 +1079,9 @@ _map_op_controller_path_delete_node(rig_engine_op_map_context_t *ctx,
                                     rig_engine_op_apply_context_t *apply_ctx,
                                     Rig__Operation *pb_op)
 {
-    int64_t *id_ptrs[] = { &pb_op->controller_path_delete_node->object_id,
-                           &pb_op->controller_path_delete_node->controller_id,
-                           NULL };
+    uint64_t *id_ptrs[] = { &pb_op->controller_path_delete_node->object_id,
+                            &pb_op->controller_path_delete_node->controller_id,
+                            NULL };
 
     if (!map_ids(ctx, id_ptrs))
         return false;
@@ -1184,9 +1184,9 @@ _map_op_controller_path_set_node(rig_engine_op_map_context_t *ctx,
                                  rig_engine_op_apply_context_t *apply_ctx,
                                  Rig__Operation *pb_op)
 {
-    int64_t *id_ptrs[] = { &pb_op->controller_path_set_node->object_id,
-                           &pb_op->controller_path_set_node->controller_id,
-                           NULL };
+    uint64_t *id_ptrs[] = { &pb_op->controller_path_set_node->object_id,
+                            &pb_op->controller_path_set_node->controller_id,
+                            NULL };
 
     if (!map_ids(ctx, id_ptrs))
         return false;
@@ -1273,9 +1273,9 @@ _map_op_controller_add_property(rig_engine_op_map_context_t *ctx,
                                 rig_engine_op_apply_context_t *apply_ctx,
                                 Rig__Operation *pb_op)
 {
-    int64_t *id_ptrs[] = { &pb_op->controller_add_property->object_id,
-                           &pb_op->controller_add_property->controller_id,
-                           NULL };
+    uint64_t *id_ptrs[] = { &pb_op->controller_add_property->object_id,
+                            &pb_op->controller_add_property->controller_id,
+                            NULL };
 
     if (!map_ids(ctx, id_ptrs))
         return false;
@@ -1359,9 +1359,9 @@ _map_op_controller_remove_property(rig_engine_op_map_context_t *ctx,
                                    rig_engine_op_apply_context_t *apply_ctx,
                                    Rig__Operation *pb_op)
 {
-    int64_t *id_ptrs[] = { &pb_op->controller_remove_property->object_id,
-                           &pb_op->controller_remove_property->controller_id,
-                           NULL };
+    uint64_t *id_ptrs[] = { &pb_op->controller_remove_property->object_id,
+                            &pb_op->controller_remove_property->controller_id,
+                            NULL };
 
     if (!map_ids(ctx, id_ptrs))
         return false;
@@ -1448,7 +1448,7 @@ _map_op_controller_property_set_method(rig_engine_op_map_context_t *ctx,
                                        rig_engine_op_apply_context_t *apply_ctx,
                                        Rig__Operation *pb_op)
 {
-    int64_t *id_ptrs[] = {
+    uint64_t *id_ptrs[] = {
         &pb_op->controller_property_set_method->object_id,
         &pb_op->controller_property_set_method->controller_id, NULL
     };

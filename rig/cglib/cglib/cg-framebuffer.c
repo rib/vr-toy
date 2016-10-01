@@ -1396,15 +1396,15 @@ cg_framebuffer_orthographic(cg_framebuffer_t *framebuffer,
                             float y_1,
                             float x_2,
                             float y_2,
-                            float near,
-                            float far)
+                            float z_near,
+                            float z_far)
 {
     c_matrix_t ortho;
     cg_matrix_stack_t *projection_stack =
         _cg_framebuffer_get_projection_stack(framebuffer);
 
     c_matrix_init_identity(&ortho);
-    c_matrix_orthographic(&ortho, x_1, y_1, x_2, y_2, near, far);
+    c_matrix_orthographic(&ortho, x_1, y_1, x_2, y_2, z_near, z_far);
     cg_matrix_stack_set(projection_stack, &ortho);
 
     if (framebuffer->dev->current_draw_buffer == framebuffer)

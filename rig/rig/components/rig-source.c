@@ -89,6 +89,7 @@ enum load_status {
     LOAD_STATE_NONE,
     LOAD_STATE_MIME_QUERY,
     LOAD_STATE_READING,
+    LOAD_STATE_LOADING,
     LOAD_STATE_LOADED,
     LOAD_STATE_ERROR,
 };
@@ -391,6 +392,9 @@ destroy_load_state(rig_source_t *source)
     case LOAD_STATE_ERROR:
         c_free(state->error);
         state->error = NULL;
+        break;
+    case LOAD_STATE_LOADING:
+#warning "fix destroy_load_state()"
         break;
     case LOAD_STATE_LOADED:
         break;
@@ -856,7 +860,7 @@ read_file_contents_cb(uv_work_t *req)
     load_state_t *state = &source->load_state;
     c_error_t *error = NULL;
     char *data;
-    unsigned long len;
+    size_t len;
 
     if (!c_file_get_contents(state->filename,
                              &data,
@@ -956,7 +960,76 @@ cleanup_ffmpeg_state(rig_source_t *source)
 #endif
 
 static void
-_source_load_progress(rig_source_t *source)
+_source_lookup_mime_type(rig_source_t *source)
+{
+    load_state_t *state = &source->load_state;
+    rig_engine_t *engine = rig_component_props_get_engine(&source->component);
+    rut_shell_t *shell = engine->shell;
+
+#ifdef USE_UV
+    char *filename = NULL;
+
+    state->status = LOAD_STATE_MIME_QUERY;
+
+    if (source->url)
+        filename = get_url_filename(shell, source->url);
+
+    /* TODO: support mime type queries just based on a data
+     * pointer + len */
+    if (filename) {
+        state->mime_req.data = source;
+        xdgmime_request_init(shell->uv_loop, &state->mime_req);
+        xdgmime_request_start(&state->mime_req,
+                              filename,
+                              mime_request_cb);
+
+        c_free(filename);
+        return;
+    } else
+#endif
+    {
+        state->error = c_strdup_printf("Can't determine source mime type");
+        state->status = LOAD_STATE_ERROR;
+
+        rut_closure_list_invoke(&source->error_cb_list,
+                                rig_source_error_callback_t,
+                                source,
+                                state->error);
+        return;
+    }
+}
+
+static void
+_source_read(rig_source_t *source)
+{
+    load_state_t *state = &source->load_state;
+    rig_engine_t *engine = rig_component_props_get_engine(&source->component);
+    rut_shell_t *shell = engine->shell;
+
+    state->status = LOAD_STATE_READING;
+
+    state->filename = get_url_filename(shell, source->url);
+
+    if (!state->filename) {
+        state->status = LOAD_STATE_ERROR;
+        state->error = c_strdup("No file to read source data from");
+
+        rut_closure_list_invoke(&source->error_cb_list,
+                                rig_source_error_callback_t,
+                                source,
+                                state->error);
+    }
+
+    state->read_req.data = source;
+    uv_queue_work(shell->uv_loop,
+                  &state->read_req,
+                  read_file_contents_cb,
+                  finished_read_file_contents_cb);
+    return;
+}
+
+static void
+_source_upload(rig_source_t *source)
 {
     load_state_t *state = &source->load_state;
     rig_engine_t *engine = rig_component_props_get_engine(&source->component);
@@ -965,71 +1038,13 @@ _source_load_progress(rig_source_t *source)
 
     c_return_if_fail(frontend);
 
-    if (state->status == LOAD_STATE_ERROR)
-        return;
-
-    if (!source->mime) {
-#ifdef USE_UV
-        char *filename = NULL;
-
-        state->status = LOAD_STATE_MIME_QUERY;
-
-        if (source->url)
-            filename = get_url_filename(shell, source->url);
-
-        /* TODO: support mime type queries just based on a data
-         * pointer + len */
-        if (filename) {
-            state->mime_req.data = source;
-            xdgmime_request_init(shell->uv_loop, &state->mime_req);
-            xdgmime_request_start(&state->mime_req,
-                                  filename,
-                                  mime_request_cb);
-
-            c_free(filename);
-            return;
-        } else
-#endif
-        {
-            state->error = c_strdup_printf("Can't determine source mime type");
-            state->status = LOAD_STATE_ERROR;
-
-            rut_closure_list_invoke(&source->error_cb_list,
-                                    rig_source_error_callback_t,
-                                    source,
-                                    state->error);
-            return;
-        }
-    }
-
-    if (!source->data) {
-        state->status = LOAD_STATE_READING;
-
-        state->filename = get_url_filename(shell, source->url);
-
-        if (!state->filename) {
-            state->status = LOAD_STATE_ERROR;
-            state->error = c_strdup("No file to read source data from");
-
-            rut_closure_list_invoke(&source->error_cb_list,
-                                    rig_source_error_callback_t,
-                                    source,
-                                    state->error);
-        }
-
-        state->read_req.data = source;
-        uv_queue_work(shell->uv_loop,
-                      &state->read_req,
-                      read_file_contents_cb,
-                      finished_read_file_contents_cb);
-        return;
-    }
-
 #ifdef CG_HAS_WEBGL_SUPPORT
     if (strncmp(mime, "image/", 6) == 0) {
         char *filename = get_url_filename(source->url);
         cg_webgl_image_t *image;
-        
+
+        state->status = LOAD_STATE_LOADING;
+
         if (filename) {
             char *remote_path = c_strdup_printf("assets/%s", filename);
 
@@ -1060,7 +1075,7 @@ _source_load_progress(rig_source_t *source)
             source->texture = cg_object_ref(frontend->default_tex2d);
             c_warning("%s", e->message);
 
-            state->status = LOAD_STATED_ERROR;
+            state->status = LOAD_STATE_ERROR;
             state->error = c_strdup(e->message);
 
             rut_exception_free(e);
@@ -1096,12 +1111,12 @@ _source_load_progress(rig_source_t *source)
     if (strcmp(source->mime, "image/gif") == 0) {
         gif_result code;
 
-	gif_create(&source->gif, &bitmap_callbacks);
+        gif_create(&source->gif, &bitmap_callbacks);
 
         source->gif.priv = shell;
 
         /* FIXME: load the GIF asynchronously */
-	do {
+        do {
             code = gif_initialise(&source->gif, source->data_len, source->data);
             if (code != GIF_OK && code != GIF_WORKING) {
                 c_warning("failed to load GIF");
@@ -1261,8 +1276,8 @@ _source_load_progress(rig_source_t *source)
 
         source->changed = true;
 
-        rut_closure_list_invoke(
-            &source->ready_cb_list, rig_source_ready_callback_t, source);
+        rut_closure_list_invoke(&source->ready_cb_list,
+                                rig_source_ready_callback_t, source);
     } else
 #endif
 #ifdef USE_GSTREAMER
@@ -1276,13 +1291,60 @@ _source_load_progress(rig_source_t *source)
                          (GCallback)gst_new_frame_cb, source);
 
         source->type = SOURCE_TYPE_GSTREAMER;
+        state->status = LOAD_STATE_LOADING;
     } else
 #endif
     {
         c_warning("FIXME: Rig is missing support for '%s' on this platform",
                   source->mime);
         _source_set_textures(source, &frontend->default_tex2d, 1);
+        state->status = LOAD_STATE_LOADED;
     }
+}
+
+static void
+_source_load_progress(rig_source_t *source)
+{
+    load_state_t *state = &source->load_state;
+    rig_engine_t *engine = rig_component_props_get_engine(&source->component);
+
+#ifdef CG_HAS_WEBGL_SUPPORT
+    switch (state->status) {
+    case LOAD_STATE_ERROR:
+        return;
+    case LOAD_STATE_NONE:
+        _source_lookup_mime_type(source);
+        break;
+    case LOAD_STATE_MIME_QUERY:
+        c_return_if_fail(source->mime_type);
+        _source_upload(source);
+        break;
+    case LOAD_STATE_LOADING:
+        break;
+    case LOAD_STATE_LOADED:
+        break;
+    }
+#else
+    switch (state->status) {
+    case LOAD_STATE_ERROR:
+        return;
+    case LOAD_STATE_NONE:
+        _source_lookup_mime_type(source);
+        break;
+    case LOAD_STATE_MIME_QUERY:
+        c_return_if_fail(source->mime);
+        _source_read(source);
+        break;
+    case LOAD_STATE_READING:
+        if (source->data)
+            _source_upload(source);
+        break;
+    case LOAD_STATE_LOADING:
+        break;
+    case LOAD_STATE_LOADED:
+        break;
+    }
+#endif
 }
 
 void
@@ -1624,6 +1686,7 @@ rig_source_attach_frame(rig_source_t *source,
                                       source->textures[0]);
         break;
     }
+#ifdef USE_FFMPEG
     case SOURCE_TYPE_FFMPEG: {
         rig_engine_t *engine = rig_component_props_get_engine(&source->component);
         cg_device_t *dev = engine->shell->cg_device;
@@ -1674,6 +1737,7 @@ rig_source_attach_frame(rig_source_t *source,
         source->ff_current_buffer_age = buffered_state->age;
         break;
     }
+#endif
     default:
         for (int i = 0; i < source->n_textures; i++) {
             cg_pipeline_set_layer_texture(pipeline,
@@ -1987,7 +2051,7 @@ decode_ffmpeg_frame_cb(uv_work_t *req)
     struct decode_work *work = req->data;
 
     decode_ffmpeg_video(work);
-    decode_ffmpeg_audio(work);
+    //decode_ffmpeg_audio(work);
 }
 
 static void
@@ -2000,7 +2064,7 @@ decode_ffmpeg_frame_finished_cb(uv_work_t *req, int status)
     source->ff_decode_buf = !source->ff_decode_buf;
     source->ff_decoding = false;
 
-    rut_shell_queue_audio_chunk(engine->shell, work->audio_chunk);
+    //rut_shell_queue_audio_chunk(engine->shell, work->audio_chunk);
     rut_object_unref(work->audio_chunk);
 
     rut_object_unref(work->source);
@@ -2086,7 +2150,7 @@ rig_source_prepare_for_frame(rut_object_t *object)
             c_list_init(&work->packets);
 
             /* Uncomment for synchronous read, for debugging... */
-#if 0
+#if 1
             read_ffmpeg_packets_cb(&work->req);
             read_ffmpeg_packets_finished_cb(&work->req, 0);
 #else
@@ -2107,11 +2171,13 @@ rig_source_prepare_for_frame(rut_object_t *object)
             work->req.data = work;
             work->source = rut_object_ref(source);
 
+//#ifndef _WIN32
             /* FIXME: hack */
             work->audio_chunk = rut_audio_chunk_new(engine->shell);
             work->target_pcm_freq = engine->shell->pcm_freq;
             work->target_pcm_channel_layout =
                 av_get_default_channel_layout(engine->shell->pcm_n_channels);
+//#endif
 
             /* filter packets into per-stream queues... */
             c_list_for_each_safe(packet, tmp, &source->ff_io_packets, link) {
@@ -2119,8 +2185,10 @@ rig_source_prepare_for_frame(rut_object_t *object)
 
                 if (packet->pkt.stream_index == source->ff_video_stream) {
                     c_list_insert(source->ff_queued_video_packets.prev, &packet->link);
+//#ifndef _WIN32
                 } else if (packet->pkt.stream_index == source->ff_audio_stream) {
                     c_list_insert(source->ff_queued_audio_packets.prev, &packet->link);
+//#endif
                 } else {
                     av_packet_unref(&packet->pkt);
                     c_free(packet);
@@ -2128,7 +2196,7 @@ rig_source_prepare_for_frame(rut_object_t *object)
             }
 
             /* Uncomment for synchronous decode, for debugging... */
-#if 0
+#if 1
             decode_ffmpeg_frame_cb(&work->req);
             decode_ffmpeg_frame_finished_cb(&work->req, 0);
 #else

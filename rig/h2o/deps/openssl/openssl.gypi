@@ -1275,6 +1275,7 @@
       '-lws2_32.lib',
       '-lgdi32.lib',
       '-luser32.lib',
+      '-ladvapi32.lib',
     ],
     'openssl_default_defines_not_win': [
       # ENGINESDIR must be defined if OPENSSLDIR is.

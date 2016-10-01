@@ -47,37 +47,33 @@ c_get_xdg_data_home(void)
     return resolved;
 }
 
-const char *
+const char * const *
 c_get_xdg_data_dirs(void)
 {
-    static const char *resolved = NULL;
+    static char **split_data_dirs = NULL;
 
-    if (!resolved) {
-        resolved = getenv("XDG_DATA_DIRS");
-#ifndef _WIN32
-        if (!resolved)
-            resolved = "/usr/local/share/:/usr/share/";
+    if (!split_data_dirs) {
+        const char *data_dirs = getenv("XDG_DATA_DIRS");
+        if (!data_dirs) {
+#ifdef __linux__
+            data_dirs = "/usr/local/share/:/usr/share/";
+#elif defined(__ANDROID__)
+            data_dirs = "/data";
+#else
+            data_dirs = "";
 #endif
+        }
+        split_data_dirs = c_strsplit(data_dirs, C_SEARCHPATH_SEPARATOR_S, -1);
     }
 
-    return resolved;
+    return (const char * const *)split_data_dirs;
 }
 
 void
 c_foreach_xdg_data_dir(c_xdg_dir_callback_t callback, void *user_data)
 {
-    static char **split_data_dirs = NULL;
-    int i;
+    const char * const *split_data_dirs = c_get_xdg_data_dirs();
 
-    if (!split_data_dirs) {
-        const char *data_dirs = c_get_xdg_data_dirs();
-
-        if (!data_dirs)
-            return;
-
-        split_data_dirs = c_strsplit(data_dirs, ":", -1);
-    }
-
-    for (i = 0; split_data_dirs[i]; i++)
+    for (int i = 0; split_data_dirs[i]; i++)
         callback(split_data_dirs[i], user_data);
 }

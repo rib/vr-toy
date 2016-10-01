@@ -67,9 +67,7 @@ _cg_util_one_at_a_time_mix(unsigned int hash)
     return hash;
 }
 
-/* The 'ffs' function is part of C99 so it isn't always available */
-#ifndef CG_HAVE_FFS
-
+#if !defined(CG_HAVE_FFS) && !defined(CG_HAVE_BUILTIN_FFS)
 int
 _cg_util_ffs(int num)
 {

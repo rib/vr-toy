@@ -649,7 +649,11 @@ double c_ascii_strtod(const char *nptr, char **endptr);
 #define c_ascii_isxdigit(c) (isxdigit(c) != 0)
 
 /* FIXME: c_strcasecmp supports utf8 unicode stuff */
+#ifdef _WIN32
+#define c_strcasecmp stricmp
+#else
 #define c_strcasecmp strcasecmp
+#endif
 #define c_ascii_strtoull strtoull
 #define c_strncasecmp strncasecmp
 #define c_strstrip(a) c_strchug(c_strchomp(a))
@@ -1758,7 +1762,7 @@ bool c_random_boolean(void);
 
 /* XDG dirs */
 const char *c_get_xdg_data_home(void);
-const char *c_get_xdg_data_dirs(void);
+const char * const *c_get_xdg_data_dirs(void);
 typedef void (*c_xdg_dir_callback_t)(const char *dir, void *data);
 void c_foreach_xdg_data_dir(c_xdg_dir_callback_t callback, void *user_data);
 
