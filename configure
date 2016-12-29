@@ -23,8 +23,8 @@ sys.path.insert(0, os.path.join(src_dir, 'build', 'gyp', 'pylib'))
 try:
     import gyp
 except ImportError:
-    print('GYP build tool not found. Optionally install under build/gyp with:')
-    print('  git clone https://chromium.googlesource.com/external/gyp build/gyp')
+    print('GYP build tool not found. Install under build/gyp with:')
+    print('  git clone https://github.com/rib/gyp.git build/gyp')
     sys.exit(42)
 
 if "CYGWIN" in platform.system():
@@ -422,8 +422,8 @@ gyp_args = []
 gyp_args.append(os.path.join(src_dir, 'vr-toy.gyp'))
 
 if OS == "win":
-    os.environ['CC'] = "clang-cl.exe"
-    os.environ['CXX'] = "clang-cl.exe"
+    os.environ['CC'] = "clang-cl"
+    os.environ['CXX'] = "clang-cl"
     os.environ['GYP_MSVS_VERSION'] = "2015"
     gyp_args.append('-DMSVS_VERSION=2015') # XXX: HACK to appease openssl.gypi
     gyp_args.append('--no-parallel')
