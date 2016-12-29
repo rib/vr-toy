@@ -23,7 +23,8 @@ sys.path.insert(0, os.path.join(src_dir, 'build', 'gyp', 'pylib'))
 try:
     import gyp
 except ImportError:
-    print('You need to install gyp in build/gyp first. See the README.')
+    print('GYP build tool not found. Optionally install under build/gyp with:')
+    print('  git clone https://chromium.googlesource.com/external/gyp build/gyp')
     sys.exit(42)
 
 if "CYGWIN" in platform.system():
